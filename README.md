@@ -42,14 +42,9 @@ SELECT email
 """)
 
   val values = userId :: Nil
-
-  def handle(rs: ResultSet) = {
-    if (rs.next()) {
-      Some(rs.getString())
-    } else {
-      None
-    }
-  }
+  
+  def reduce(results: Iterator[IndexedSeq[Cell]]) =
+    results.toSeq.headOption.map { _.toString }
 }
 
 // this'll print the email address for user #4002

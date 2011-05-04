@@ -39,7 +39,7 @@ object Database {
 }
 
 class Database(implicit source: DataSource) extends Instrumented with Logging {
-  def apply[A](query: Query[A]): A = {
+  def apply[A](query: RawQuery[A]): A = {
     query.timer.time {
       withConnection {connection =>
         if (log.isDebugEnabled) {

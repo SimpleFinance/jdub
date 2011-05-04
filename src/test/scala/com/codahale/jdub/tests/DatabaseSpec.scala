@@ -1,8 +1,7 @@
 package com.codahale.jdub.tests
 
 import com.codahale.simplespec.Spec
-import java.sql.ResultSet
-import com.codahale.jdub.{Query, Statement, Database}
+import com.codahale.jdub.{Cell, Query, Statement, Database}
 
 case class ArbitraryStatement(sql: String, values: Seq[Any] = Nil) extends Statement
 
@@ -10,18 +9,13 @@ case class AgesQuery() extends Query[Set[Int]]() {
   val sql = "SELECT age FROM people"
 
   val values = Nil
-
-  def handle(rs: ResultSet) = {
-    var result = Set[Int]()
-    while (rs.next()) {
-      result += rs.getInt(1)
-    }
-    result
-  }
+  
+  def reduce(results: Iterator[IndexedSeq[Cell]]) = results.map { _.head.toInt }.toSet
 }
 
 object DatabaseSpec extends Spec {
   class `Querying a database` {
+    Class.forName("org.hsqldb.jdbcDriver")
     val db = Database.connect("jdbc:hsqldb:mem:DbTest", "sa", "")
     db.execute(ArbitraryStatement("DROP TABLE people IF EXISTS"))
     db.execute(ArbitraryStatement("CREATE TABLE people (name varchar primary key, email varchar, age int)"))
