@@ -13,6 +13,14 @@ case class AgesQuery() extends Query[Set[Int]]() {
   def reduce(results: Iterator[IndexedSeq[Cell]]) = results.map { _.head.toInt }.toSet
 }
 
+case class AgeQuery(name: String) extends Query[Option[Int]] {
+  val sql = trim("SELECT age FROM people WHERE name = ?")
+
+  val values = name :: Nil
+
+  def reduce(results: Iterator[IndexedSeq[Cell]]) = results.toSeq.headOption.map { _.head.toInt }
+}
+
 object DatabaseSpec extends Spec {
   class `Querying a database` {
     Class.forName("org.hsqldb.jdbcDriver")
@@ -24,6 +32,10 @@ object DatabaseSpec extends Spec {
 
     def `should return the handled result set` {
       db(AgesQuery()) must beEqualTo(Set(29, 30))
+    }
+
+    def `should return a single row` {
+      db(AgeQuery("Coda Hale")) must beSome(29)
     }
   }
 }

@@ -44,7 +44,7 @@ SELECT email
   val values = userId :: Nil
   
   def reduce(results: Iterator[IndexedSeq[Cell]]) =
-    results.toSeq.headOption.map { _.toString }
+    results.toSeq.headOption.map { _.head.toString }
 }
 
 // this'll print the email address for user #4002
