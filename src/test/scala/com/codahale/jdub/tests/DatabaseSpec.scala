@@ -10,7 +10,7 @@ case class AgesQuery() extends Query[Set[Int]]() {
 
   val values = Nil
   
-  def reduce(results: Iterator[IndexedSeq[Cell]]) = results.map { _.head.toInt }.toSet
+  def reduce(results: Stream[IndexedSeq[Cell]]) = results.map { _.head.toInt }.toSet
 }
 
 case class AgeQuery(name: String) extends Query[Option[Int]] {
@@ -18,7 +18,7 @@ case class AgeQuery(name: String) extends Query[Option[Int]] {
 
   val values = name :: Nil
 
-  def reduce(results: Iterator[IndexedSeq[Cell]]) = results.toSeq.headOption.map { _.head.toInt }
+  def reduce(results: Stream[IndexedSeq[Cell]]) = results.headOption.map { _.head.toInt }
 }
 
 object DatabaseSpec extends Spec {
