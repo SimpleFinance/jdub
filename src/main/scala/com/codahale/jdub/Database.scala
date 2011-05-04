@@ -41,60 +41,66 @@ object Database {
 class Database(implicit source: DataSource) extends Instrumented with Logging {
   def apply[A](query: RawQuery[A]): A = {
     query.timer.time {
-      withConnection {connection =>
+      val connection = source.getConnection
+      try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
         }
-
         val stmt = connection.prepareStatement(query.sql)
-        prepare(stmt, query.values)
-
-        val results = stmt.executeQuery()
         try {
-          query.handle(results)
+          prepare(stmt, query.values)
+          val results = stmt.executeQuery()
+          try {
+            query.handle(results)
+          } finally {
+            results.close()
+          }
         } finally {
-          results.close()
+          stmt.close()
         }
+      } finally {
+        connection.close()
       }
     }
   }
 
   def execute(statement: Statement) = {
     statement.timer.time {
-      withConnection {connection =>
+      val connection = source.getConnection
+      try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
         }
-
         val stmt = connection.prepareStatement(statement.sql)
-        prepare(stmt, statement.values)
-
-        stmt.execute()
+        try {
+          prepare(stmt, statement.values)
+          stmt.execute()
+        } finally {
+          stmt.close()
+        }
+      } finally {
+        connection.close()
       }
     }
   }
 
   def update(statement: Statement) = {
     statement.timer.time {
-      withConnection {connection =>
+      val connection = source.getConnection
+      try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
         }
-
         val stmt = connection.prepareStatement(statement.sql)
-        prepare(stmt, statement.values)
-
-        stmt.executeUpdate()
+        try {
+          prepare(stmt, statement.values)
+          stmt.executeUpdate()
+        } finally {
+          stmt.close()
+        }
+      } finally {
+        connection.close()
       }
-    }
-  }
-
-  private def withConnection[A](f: Connection => A) = {
-    val connection = source.getConnection
-    try {
-      f(connection)
-    } finally {
-      connection.close()
     }
   }
 
