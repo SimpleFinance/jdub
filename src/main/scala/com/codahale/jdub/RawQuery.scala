@@ -12,5 +12,7 @@ trait RawQuery[A] extends Instrumented {
 
   def handle(results: ResultSet): A
 
+  def apply(db: Database): A = db(this)
+
   protected def trim(sql: String) = sql.replaceAll("""[\s]+""", " ").trim
 }
