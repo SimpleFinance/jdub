@@ -1,9 +1,9 @@
 package com.codahale.jdub
 
+import java.sql.PreparedStatement
 import javax.sql.DataSource
 import com.codahale.logula.Logging
 import com.yammer.metrics.Instrumented
-import java.sql.{Connection, PreparedStatement}
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
 
