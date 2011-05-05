@@ -5,6 +5,8 @@ import java.sql.ResultSet
 class Cell(rs: ResultSet, i: Int) {
   override def toString = rs.getString(i)
 
+  def toBoolean = rs.getBoolean(i)
+
   def toByte = rs.getByte(i)
 
   def toShort = rs.getShort(i)
