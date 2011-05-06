@@ -31,7 +31,8 @@ class JdubProject(info: ProjectInfo) extends DefaultProject(info) with MavenDepe
   /**
    * Test Dependencies
    */
-  val simplespec = "com.codahale" %% "simplespec" % "0.2.0" % "test"
-  val mockito = "org.mockito" % "mockito-all" % "1.8.4" % "test"
+  def specs2Framework = new TestFramework("org.specs2.runner.SpecsFramework")
+  override def testFrameworks = super.testFrameworks ++ Seq(specs2Framework)
+  val specs2 = "org.specs2" %% "specs2" % "1.2" % "test"
   val hsqldb = "org.hsqldb" % "hsqldb" % "1.8.0.10" % "test"
 }
