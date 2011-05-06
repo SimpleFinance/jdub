@@ -34,7 +34,7 @@ object Database {
     val poolableConnectionFactory = new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database()(new PoolingDataSource(pool))
+    new Database(new PoolingDataSource(pool))
   }
 
   private def prependComment(obj: Object, sql: String) =
@@ -43,7 +43,7 @@ object Database {
   def poop = prependComment(PingQuery, PingQuery.sql)
 }
 
-class Database(implicit source: DataSource) extends Instrumented with Logging {
+class Database(source: DataSource) extends Instrumented with Logging {
   import Database._
 
   def ping() = apply(PingQuery)
