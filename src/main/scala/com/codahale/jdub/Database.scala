@@ -20,8 +20,6 @@ object Database {
               checkConnectionHealthWhenIdleForMS: Long = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
               closeConnectionIfIdleForMS: Long = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
               healthCheckQuery: String = prependComment(PingQuery, PingQuery.sql)) = {
-    println(healthCheckQuery)
-
     val c = new GenericObjectPool.Config
     c.maxWait = maxWaitForConnectionInMS
     c.maxIdle = maxSize
