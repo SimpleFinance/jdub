@@ -19,7 +19,9 @@ object Database {
               checkConnectionBeforeQuery: Boolean = DEFAULT_TEST_ON_BORROW,
               checkConnectionHealthWhenIdleForMS: Long = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
               closeConnectionIfIdleForMS: Long = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
-              healthCheckQuery: String = "/* Jdub Healthcheck */ SELECT 1") = {
+              healthCheckQuery: String = prependComment(PingQuery, PingQuery.sql)) = {
+    println(healthCheckQuery)
+
     val c = new GenericObjectPool.Config
     c.maxWait = maxWaitForConnectionInMS
     c.maxIdle = maxSize
@@ -36,9 +38,18 @@ object Database {
     )
     new Database()(new PoolingDataSource(pool))
   }
+
+  private def prependComment(obj: Object, sql: String) =
+    "/* %s */ %s".format(obj.getClass.getSimpleName.replace("$", ""), sql)
+
+  def poop = prependComment(PingQuery, PingQuery.sql)
 }
 
 class Database(implicit source: DataSource) extends Instrumented with Logging {
+  import Database._
+
+  def ping() = apply(PingQuery)
+
   def apply[A](query: RawQuery[A]): A = {
     query.timer.time {
       val connection = source.getConnection
@@ -46,7 +57,7 @@ class Database(implicit source: DataSource) extends Instrumented with Logging {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
         }
-        val stmt = connection.prepareStatement(query.sql)
+        val stmt = connection.prepareStatement(prependComment(query, query.sql))
         try {
           prepare(stmt, query.values)
           val results = stmt.executeQuery()
@@ -71,7 +82,7 @@ class Database(implicit source: DataSource) extends Instrumented with Logging {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
         }
-        val stmt = connection.prepareStatement(statement.sql)
+        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
         try {
           prepare(stmt, statement.values)
           stmt.execute()
@@ -91,7 +102,7 @@ class Database(implicit source: DataSource) extends Instrumented with Logging {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
         }
-        val stmt = connection.prepareStatement(statement.sql)
+        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
         try {
           prepare(stmt, statement.values)
           stmt.executeUpdate()
