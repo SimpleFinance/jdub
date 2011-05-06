@@ -43,7 +43,7 @@ SELECT email
 
   val values = userId :: Nil
   
-  def reduce(results: Iterator[IndexedSeq[Cell]]) =
+  def reduce(results: Iterator[IndexedSeq[Value]]) =
     results.toSeq.headOption.map { _.head.toString }
 }
 
