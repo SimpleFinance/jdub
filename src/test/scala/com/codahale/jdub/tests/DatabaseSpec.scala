@@ -1,7 +1,7 @@
 package com.codahale.jdub.tests
 
 import com.codahale.simplespec.Spec
-import com.codahale.jdub.{Cell, Query, Statement, Database}
+import com.codahale.jdub.{Value, Query, Statement, Database}
 
 case class ArbitraryStatement(sql: String, values: Seq[Any] = Nil) extends Statement
 
@@ -10,7 +10,7 @@ case class AgesQuery() extends Query[Set[Int]]() {
 
   val values = Nil
   
-  def reduce(results: Stream[IndexedSeq[Cell]]) = results.map { _.head.toInt }.toSet
+  def reduce(results: Stream[IndexedSeq[Value]]) = results.map { _.head.toInt }.toSet
 }
 
 case class AgeQuery(name: String) extends Query[Option[Int]] {
@@ -18,7 +18,7 @@ case class AgeQuery(name: String) extends Query[Option[Int]] {
 
   val values = name :: Nil
 
-  def reduce(results: Stream[IndexedSeq[Cell]]) = results.headOption.map { _.head.toInt }
+  def reduce(results: Stream[IndexedSeq[Value]]) = results.headOption.map { _.head.toInt }
 }
 
 object DatabaseSpec extends Spec {
