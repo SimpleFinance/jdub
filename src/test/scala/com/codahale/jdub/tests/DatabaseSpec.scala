@@ -30,11 +30,11 @@ object DatabaseSpec extends Spec {
     db.execute(ArbitraryStatement("INSERT INTO people VALUES (?, ?, ?)", Seq("Coda Hale", "chale@yammer-inc.com", 29)))
     db.execute(ArbitraryStatement("INSERT INTO people VALUES (?, ?, ?)", Seq("Kris Gale", "kgale@yammer-inc.com", 30)))
 
-    def `should return the handled result set` {
+    def `should return the handled result set` = {
       db(AgesQuery()) must beEqualTo(Set(29, 30))
     }
 
-    def `should return a single row` {
+    def `should return a single row` = {
       db(AgeQuery("Coda Hale")) must beSome(29)
     }
   }

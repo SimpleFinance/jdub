@@ -10,6 +10,9 @@ import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory
 object Database {
   import GenericObjectPool._
 
+  /**
+   * Create a pool of connections to the given database.
+   */
   def connect(url: String,
               username: String,
               password: String,
@@ -43,11 +46,20 @@ object Database {
   def poop = prependComment(PingQuery, PingQuery.sql)
 }
 
+/**
+ * A database.
+ */
 class Database(source: DataSource) extends Instrumented with Logging {
   import Database._
 
+  /**
+   * Returns {@code true} if we can talk to the database.
+   */
   def ping() = apply(PingQuery)
 
+  /**
+   * Performs a query and returns the results.
+   */
   def apply[A](query: RawQuery[A]): A = {
     query.timer.time {
       val connection = source.getConnection
@@ -73,27 +85,15 @@ class Database(source: DataSource) extends Instrumented with Logging {
     }
   }
 
-  def execute(statement: Statement) = {
-    statement.timer.time {
-      val connection = source.getConnection
-      try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
-        }
-        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
-        try {
-          prepare(stmt, statement.values)
-          stmt.execute()
-        } finally {
-          stmt.close()
-        }
-      } finally {
-        connection.close()
-      }
-    }
-  }
+  /**
+   * Performs a query and returns the results.
+   */
+  def query[A](query: RawQuery[A]): A = apply(query)
 
-  def update(statement: Statement) = {
+  /**
+   * Executes an update, insert, delete, or DDL statement.
+   */
+  def execute(statement: Statement) = {
     statement.timer.time {
       val connection = source.getConnection
       try {
@@ -112,6 +112,21 @@ class Database(source: DataSource) extends Instrumented with Logging {
       }
     }
   }
+
+  /**
+   * Executes an update statement.
+   */
+  def update(statement: Statement) = execute(statement)
+
+  /**
+   * Executes an insert statement.
+   */
+  def insert(statement: Statement) = execute(statement)
+
+  /**
+   * Executes a delete statement.
+   */
+  def delete(statement: Statement) = execute(statement)
 
   private def prepare(stmt: PreparedStatement, values: Seq[Any]) {
     for ((v, i) <- values.zipWithIndex) {
