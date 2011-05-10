@@ -1,15 +1,18 @@
 package com.codahale.jdub
 
+import java.sql.PreparedStatement
 import javax.sql.DataSource
 import com.codahale.logula.Logging
 import com.yammer.metrics.Instrumented
-import java.sql.{Connection, PreparedStatement}
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
 
 object Database {
   import GenericObjectPool._
 
+  /**
+   * Create a pool of connections to the given database.
+   */
   def connect(url: String,
               username: String,
               password: String,
@@ -19,7 +22,7 @@ object Database {
               checkConnectionBeforeQuery: Boolean = DEFAULT_TEST_ON_BORROW,
               checkConnectionHealthWhenIdleForMS: Long = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
               closeConnectionIfIdleForMS: Long = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
-              healthCheckQuery: String = "/* Jdub Healthcheck */ SELECT 1") = {
+              healthCheckQuery: String = prependComment(PingQuery, PingQuery.sql)) = {
     val c = new GenericObjectPool.Config
     c.maxWait = maxWaitForConnectionInMS
     c.maxIdle = maxSize
@@ -34,69 +37,96 @@ object Database {
     val poolableConnectionFactory = new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database()(new PoolingDataSource(pool))
+    new Database(new PoolingDataSource(pool))
   }
+
+  private def prependComment(obj: Object, sql: String) =
+    "/* %s */ %s".format(obj.getClass.getSimpleName.replace("$", ""), sql)
+
+  def poop = prependComment(PingQuery, PingQuery.sql)
 }
 
-class Database(implicit source: DataSource) extends Instrumented with Logging {
-  def apply[A](query: Query[A]): A = {
+/**
+ * A database.
+ */
+class Database(source: DataSource) extends Instrumented with Logging {
+  import Database._
+
+  /**
+   * Returns {@code true} if we can talk to the database.
+   */
+  def ping() = apply(PingQuery)
+
+  /**
+   * Performs a query and returns the results.
+   */
+  def apply[A](query: RawQuery[A]): A = {
     query.timer.time {
-      withConnection {connection =>
+      val connection = source.getConnection
+      try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
         }
-
-        val stmt = connection.prepareStatement(query.sql)
-        prepare(stmt, query.values)
-
-        val results = stmt.executeQuery()
+        val stmt = connection.prepareStatement(prependComment(query, query.sql))
         try {
-          query.handle(results)
+          prepare(stmt, query.values)
+          val results = stmt.executeQuery()
+          try {
+            query.handle(results)
+          } finally {
+            results.close()
+          }
         } finally {
-          results.close()
+          stmt.close()
         }
+      } finally {
+        connection.close()
       }
     }
   }
 
+  /**
+   * Performs a query and returns the results.
+   */
+  def query[A](query: RawQuery[A]): A = apply(query)
+
+  /**
+   * Executes an update, insert, delete, or DDL statement.
+   */
   def execute(statement: Statement) = {
     statement.timer.time {
-      withConnection {connection =>
+      val connection = source.getConnection
+      try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
         }
-
-        val stmt = connection.prepareStatement(statement.sql)
-        prepare(stmt, statement.values)
-
-        stmt.execute()
+        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
+        try {
+          prepare(stmt, statement.values)
+          stmt.executeUpdate()
+        } finally {
+          stmt.close()
+        }
+      } finally {
+        connection.close()
       }
     }
   }
 
-  def update(statement: Statement) = {
-    statement.timer.time {
-      withConnection {connection =>
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
-        }
+  /**
+   * Executes an update statement.
+   */
+  def update(statement: Statement) = execute(statement)
 
-        val stmt = connection.prepareStatement(statement.sql)
-        prepare(stmt, statement.values)
+  /**
+   * Executes an insert statement.
+   */
+  def insert(statement: Statement) = execute(statement)
 
-        stmt.executeUpdate()
-      }
-    }
-  }
-
-  private def withConnection[A](f: Connection => A) = {
-    val connection = source.getConnection
-    try {
-      f(connection)
-    } finally {
-      connection.close()
-    }
-  }
+  /**
+   * Executes a delete statement.
+   */
+  def delete(statement: Statement) = execute(statement)
 
   private def prepare(stmt: PreparedStatement, values: Seq[Any]) {
     for ((v, i) <- values.zipWithIndex) {
