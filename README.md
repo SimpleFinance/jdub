@@ -9,7 +9,7 @@ Requirements
 
 * Java SE 6
 * Scala 2.8.1
-* Metrics 2.0.0-BETA12-SNAPSHOT
+* Metrics 2.0.0-BETA12
 * Logula 2.1.1
 * Tomcat DBCP (not the app server)
 
@@ -20,7 +20,7 @@ How To Use
 
 ```scala
 val codaRepo = "Coda Hale's Repository" at "http://repo.codahale.com/"
-val jdub = "com.codahale" %% "jdub" % "0.0.1-SNAPSHOT"
+val jdub = "com.codahale" %% "jdub" % "0.0.1"
 ```
 
 (Don't forget to include your JDBC driver!)
