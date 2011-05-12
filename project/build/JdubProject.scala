@@ -24,7 +24,7 @@ class JdubProject(info: ProjectInfo) extends DefaultProject(info) with MavenDepe
   /**
    * Dependencies
    */
-  val dbcp = "org.apache.tomcat" % "tomcat-dbcp" % "7.0.8"
+  val dbcp = "org.apache.tomcat" % "tomcat-dbcp" % "7.0.12"
   val metrics = "com.yammer.metrics" %% "metrics-core" % "2.0.0-BETA12"
   val logula = "com.codahale" %% "logula" % "2.1.1"
   
