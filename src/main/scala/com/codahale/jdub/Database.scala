@@ -37,7 +37,7 @@ object Database {
     val poolableConnectionFactory = new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database(new PoolingDataSource(pool))
+    new Database(new PoolingDataSource(pool), pool)
   }
 
   private def prependComment(obj: Object, sql: String) =
@@ -49,7 +49,7 @@ object Database {
 /**
  * A database.
  */
-class Database(source: DataSource) extends Instrumented with Logging {
+class Database(source: DataSource, pool: GenericObjectPool) extends Instrumented with Logging {
   import Database._
 
   /**
@@ -127,6 +127,13 @@ class Database(source: DataSource) extends Instrumented with Logging {
    * Executes a delete statement.
    */
   def delete(statement: Statement) = execute(statement)
+
+  /**
+   * Closes all connections to the database.
+   */
+  def close() {
+    pool.close()
+  }
 
   private def prepare(stmt: PreparedStatement, values: Seq[Any]) {
     for ((v, i) <- values.zipWithIndex) {
