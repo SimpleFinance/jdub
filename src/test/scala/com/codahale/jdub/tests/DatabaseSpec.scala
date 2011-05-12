@@ -2,31 +2,28 @@ package com.codahale.jdub.tests
 
 import com.codahale.jdub._
 import com.codahale.simplespec.Spec
+import java.util.concurrent.atomic.AtomicInteger
 
 object DatabaseSpec extends Spec {
-  trait Context {
-    Class.forName("org.hsqldb.jdbcDriver")
-    val db = Database.connect("jdbc:hsqldb:mem:DbTest" + System.nanoTime(), "sa", "")
+  Class.forName("org.hsqldb.jdbcDriver")
+  private val i = new AtomicInteger
+
+  class `A database` {
+    private val db = Database.connect("jdbc:hsqldb:mem:DbTest" + i.incrementAndGet(), "sa", "")
     db.execute(SQL("DROP TABLE people IF EXISTS"))
     db.execute(SQL("CREATE TABLE people (name varchar(100) primary key, email varchar(100), age int)"))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Coda Hale", "chale@yammer-inc.com", 29)))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Kris Gale", "kgale@yammer-inc.com", 30)))
-  }
 
-  class `Querying a database for a set of results` extends Context {
-    def `should return the reduced set of results` = {
+    def `returns sets of results` = {
       db(AgesQuery()) must beEqualTo(Set(29, 30))
     }
-  }
 
-  class `Querying a database for a single row` extends Context {
-    def `should return the row` = {
+    def `returns single rows` = {
       db(AgeQuery("Coda Hale")) must beSome(29)
     }
-  }
 
-  class `Querying a database for an empty set` extends Context {
-    def `should handle that gracefully` = {
+    def `returns empty sets` = {
       db(AgeQuery("Captain Fuzzypants McFrankface")) must beNone
     }
   }
