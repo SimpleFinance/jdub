@@ -34,7 +34,8 @@ object Database {
 
     val factory = new DriverManagerConnectionFactory(url, username, password)
     val pool = new GenericObjectPool(null, c)
-    val poolableConnectionFactory = new PoolableConnectionFactory(
+    // this constructor sets itself as the factory of the pool
+    new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
     new Database(new PoolingDataSource(pool), pool)
