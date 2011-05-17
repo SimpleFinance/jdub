@@ -43,8 +43,6 @@ object Database {
 
   private def prependComment(obj: Object, sql: String) =
     "/* %s */ %s".format(obj.getClass.getSimpleName.replace("$", ""), sql)
-
-  def poop = prependComment(PingQuery, PingQuery.sql)
 }
 
 /**
