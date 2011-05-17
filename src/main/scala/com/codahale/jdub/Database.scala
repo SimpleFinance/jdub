@@ -1,11 +1,11 @@
 package com.codahale.jdub
 
-import java.sql.PreparedStatement
 import javax.sql.DataSource
 import com.codahale.logula.Logging
 import com.yammer.metrics.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
+import java.sql.{Types, PreparedStatement}
 
 object Database {
   import GenericObjectPool._
@@ -137,7 +137,11 @@ class Database(source: DataSource, pool: GenericObjectPool) extends Instrumented
 
   private def prepare(stmt: PreparedStatement, values: Seq[Any]) {
     for ((v, i) <- values.zipWithIndex) {
-      stmt.setObject(i + 1, v.asInstanceOf[AnyRef])
+      if (v == null) {
+        stmt.setNull(i + 1, Types.NULL)
+      } else {
+        stmt.setObject(i + 1, v.asInstanceOf[AnyRef])
+      }
     }
   }
 }

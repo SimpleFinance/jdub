@@ -1,8 +1,9 @@
 package com.codahale.jdub.tests
 
-import com.codahale.jdub._
 import com.codahale.simplespec.Spec
 import java.util.concurrent.atomic.AtomicInteger
+import scala.Some
+import com.codahale.jdub._
 
 object DatabaseSpec extends Spec {
   Class.forName("org.hsqldb.jdbcDriver")
@@ -14,9 +15,14 @@ object DatabaseSpec extends Spec {
     db.execute(SQL("CREATE TABLE people (name varchar(100) primary key, email varchar(100), age int)"))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Coda Hale", "chale@yammer-inc.com", 29)))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Kris Gale", "kgale@yammer-inc.com", 30)))
+    db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Old Guy", null, 402)))
 
     def `returns sets of results` = {
-      db(AgesQuery()) must beEqualTo(Set(29, 30))
+      db(AgesQuery()) must beEqualTo(Set(29, 30, 402))
+    }
+
+    def `returns sets of results with null values` = {
+      db(EmailQuery()) must beEqualTo(Seq(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None))
     }
 
     def `returns single rows` = {
@@ -45,4 +51,12 @@ case class AgeQuery(name: String) extends Query[Option[Int]] {
   val values = name :: Nil
 
   def reduce(results: Stream[IndexedSeq[Value]]) = results.headOption.map {_.head.toInt}
+}
+
+case class EmailQuery() extends Query[Seq[Option[String]]] {
+  val sql = trim("SELECT email FROM people")
+
+  val values = Nil
+
+  def reduce(results: Stream[IndexedSeq[Value]]) = results.map {_.head.nullable.toUtf8String}.toIndexedSeq
 }
