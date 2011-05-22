@@ -12,6 +12,13 @@ class JdubProject(info: ProjectInfo) extends DefaultProject(info) with MavenDepe
   override def packageToPublishActions = super.packageToPublishActions ++ Seq(packageSrc)
 
   /**
+   * Always compile with deprecation alerts, full type explanations for errors,
+   * full unchecked errors, and optimizations.
+   */
+  override def compileOptions = super.compileOptions ++
+    Seq(Deprecation, ExplainTypes, Unchecked, Optimise)
+
+  /**
    * Always check for new versions of snapshot dependencies.
    */
   override def snapshotUpdatePolicy = SnapshotUpdatePolicy.Always
