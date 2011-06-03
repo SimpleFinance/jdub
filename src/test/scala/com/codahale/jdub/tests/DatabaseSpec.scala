@@ -2,10 +2,9 @@ package com.codahale.jdub.tests
 
 import com.codahale.simplespec.Spec
 import java.util.concurrent.atomic.AtomicInteger
-import scala.Some
 import com.codahale.jdub._
 
-object DatabaseSpec extends Spec {
+class DatabaseSpec extends Spec {
   Class.forName("org.hsqldb.jdbcDriver")
   private val i = new AtomicInteger
 
