@@ -29,6 +29,17 @@
         </license>
     </licenses>
 
+    <scm>
+        <connection>scm:git:git://github.com/codahale/jdub.git</connection>
+        <developerConnection>scm:git:git@github.com:codahale/jdub.git</developerConnection>
+        <url>http://github.com/codahale/jdub/</url>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>http://github.com/codahale/jdub/issues#issue/</url>
+    </issueManagement>
+
     <repositories>
         <repository>
             <id>scala-tools-releases</id>
@@ -190,5 +201,15 @@
             </extension>
         </extensions>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.2</version>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
 
