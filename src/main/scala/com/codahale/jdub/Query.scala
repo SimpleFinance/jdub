@@ -1,5 +1,6 @@
 package com.codahale.jdub
 
+import scala.collection.JavaConversions._
 import java.sql.ResultSet
 
 trait Query[A] extends RawQuery[A] {
@@ -9,7 +10,7 @@ trait Query[A] extends RawQuery[A] {
     while (rs.next()) {
       var row = Vector.empty[Any]
       for (i <- 1 to width) {
-        row = row :+ rs.getObject(i)
+        row = row :+ rs.getObject(i, typeMap)
       }
       results = results :+ row
     }
@@ -17,4 +18,6 @@ trait Query[A] extends RawQuery[A] {
   }
 
   def reduce(results: Vector[Vector[Any]]): A
+
+  protected def typeMap = Map.empty[String, Class[_]]
 }
