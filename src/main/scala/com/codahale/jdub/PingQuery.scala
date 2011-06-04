@@ -9,6 +9,5 @@ object PingQuery extends Query[Boolean] {
 
   val values = Nil
 
-  def reduce(results: Stream[IndexedSeq[Value]]) =
-    results.headOption.flatMap { _.headOption.map { _.toInt == 1 } }.getOrElse(false)
+  def reduce(results: Vector[Vector[Any]]) = results == Vector(Vector(1))
 }

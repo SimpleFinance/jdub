@@ -41,7 +41,7 @@ case class AgesQuery() extends Query[Set[Int]]() {
 
   val values = Nil
 
-  def reduce(results: Stream[IndexedSeq[Value]]) = results.map {_.head.toInt}.toSet
+  def reduce(results: Vector[Vector[Any]]) = results.collect { case Vector(i: Int) => i }.toSet
 }
 
 case class AgeQuery(name: String) extends Query[Option[Int]] {
@@ -49,7 +49,7 @@ case class AgeQuery(name: String) extends Query[Option[Int]] {
 
   val values = name :: Nil
 
-  def reduce(results: Stream[IndexedSeq[Value]]) = results.headOption.map {_.head.toInt}
+  def reduce(results: Vector[Vector[Any]]) = results.headOption.collect { case Vector(i: Int) => i }
 }
 
 case class EmailQuery() extends Query[Seq[Option[String]]] {
@@ -57,5 +57,8 @@ case class EmailQuery() extends Query[Seq[Option[String]]] {
 
   val values = Nil
 
-  def reduce(results: Stream[IndexedSeq[Value]]) = results.map {_.head.nullable.toUtf8String}.toIndexedSeq
+  def reduce(results: Vector[Vector[Any]]) = results.map {
+    case Vector(email: String) => Some(email)
+    case _ => None
+  }.toIndexedSeq
 }
