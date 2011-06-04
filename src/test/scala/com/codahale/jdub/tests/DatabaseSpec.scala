@@ -3,7 +3,6 @@ package com.codahale.jdub.tests
 import com.codahale.simplespec.Spec
 import java.util.concurrent.atomic.AtomicInteger
 import com.codahale.jdub._
-import java.io.StringWriter
 
 class DatabaseSpec extends Spec {
   Class.forName("org.hsqldb.jdbcDriver")
