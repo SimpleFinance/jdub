@@ -1,39 +1,41 @@
 package com.codahale.jdub
 
+import java.sql.{Types, PreparedStatement}
 import javax.sql.DataSource
 import com.codahale.logula.Logging
 import com.yammer.metrics.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
-import java.sql.{Types, PreparedStatement}
+import scala.annotation.tailrec
 
 object Database {
-  import GenericObjectPool._
-
   /**
    * Create a pool of connections to the given database.
+   *
+   * @param url the JDBC url
+   * @param username the database user
+   * @param password the database password
    */
   def connect(url: String,
               username: String,
               password: String,
-              maxWaitForConnectionInMS: Long = DEFAULT_MAX_WAIT,
-              maxSize: Int = DEFAULT_MAX_ACTIVE,
-              minSize: Int = DEFAULT_MIN_IDLE,
-              checkConnectionBeforeQuery: Boolean = DEFAULT_TEST_ON_BORROW,
-              checkConnectionHealthWhenIdleForMS: Long = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
-              closeConnectionIfIdleForMS: Long = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
+              maxWaitForConnectionInMS: Long = 8,
+              maxSize: Int = 8,
+              minSize: Int = 0,
+              checkConnectionWhileIdle: Boolean = true,
+              checkConnectionHealthWhenIdleForMS: Long = 10000,
+              closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
               healthCheckQuery: String = prependComment(PingQuery, PingQuery.sql)) = {
-    val c = new GenericObjectPool.Config
-    c.maxWait = maxWaitForConnectionInMS
-    c.maxIdle = maxSize
-    c.maxActive = maxSize
-    c.minIdle = minSize
-    c.testOnBorrow = checkConnectionBeforeQuery
-    c.timeBetweenEvictionRunsMillis = checkConnectionHealthWhenIdleForMS
-    c.minEvictableIdleTimeMillis = closeConnectionIfIdleForMS
-
     val factory = new DriverManagerConnectionFactory(url, username, password)
-    val pool = new GenericObjectPool(null, c)
+    val pool = new GenericObjectPool(null)
+    pool.setMaxWait(maxWaitForConnectionInMS)
+    pool.setMaxIdle(maxSize)
+    pool.setMaxActive(maxSize)
+    pool.setMinIdle(minSize)
+    pool.setTestWhileIdle(checkConnectionWhileIdle)
+    pool.setTimeBetweenEvictionRunsMillis(checkConnectionHealthWhenIdleForMS)
+    pool.setMinEvictableIdleTimeMillis(closeConnectionIfIdleForMS)
+
     // this constructor sets itself as the factory of the pool
     new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
@@ -46,9 +48,9 @@ object Database {
 }
 
 /**
- * A database.
+ * A set of pooled connections to a database.
  */
-class Database(source: DataSource, pool: GenericObjectPool) extends Instrumented with Logging {
+class Database protected(source: DataSource, pool: GenericObjectPool) extends Instrumented with Logging {
   import Database._
 
   /**
@@ -134,13 +136,16 @@ class Database(source: DataSource, pool: GenericObjectPool) extends Instrumented
     pool.close()
   }
 
-  private def prepare(stmt: PreparedStatement, values: Seq[Any]) {
-    for ((v, i) <- values.zipWithIndex) {
+  @tailrec
+  private def prepare(stmt: PreparedStatement, values: Seq[Any], index: Int = 1) {
+    if (!values.isEmpty) {
+      val v = values.head
       if (v == null) {
-        stmt.setNull(i + 1, Types.NULL)
+        stmt.setNull(index, Types.NULL)
       } else {
-        stmt.setObject(i + 1, v.asInstanceOf[AnyRef])
+        stmt.setObject(index, v.asInstanceOf[AnyRef])
       }
+      prepare(stmt, values.tail, index + 1)
     }
   }
 }
