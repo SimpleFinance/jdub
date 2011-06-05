@@ -9,7 +9,7 @@ Requirements
 
 * Java SE 6
 * Scala 2.8.1
-* Metrics 2.0.0-BETA12
+* Metrics 2.0.0-BETA13
 * Logula 2.1.1
 * Tomcat DBCP (not the app server)
 
@@ -18,9 +18,21 @@ How To Use
 
 **First**, specify Jdub as a dependency:
 
-```scala
-val codaRepo = "Coda Hale's Repository" at "http://repo.codahale.com/"
-val jdub = "com.codahale" %% "jdub" % "0.0.1"
+```xml
+<repositories>
+  <repository>
+    <id>repo.codahale.com</id>
+    <url>http://repo.codahale.com</url>
+  </repository>
+</repositories>
+
+<dependencies>
+  <dependency>
+    <groupId>com.codahale</groupId>
+    <artifactId>jdub_${scala.version}</artifactId>
+    <version>0.0.2-SNAPSHOT</version>
+  </dependency>
+</dependencies>
 ```
 
 (Don't forget to include your JDBC driver!)
@@ -43,8 +55,9 @@ SELECT email
 
   val values = userId :: Nil
   
-  def reduce(results: Iterator[IndexedSeq[Value]]) =
-    results.toSeq.headOption.map { _.head.toString }
+  def reduce(results: Vector[Vector[Any]]) = results.collectFirst {
+    case Vector(email: String) => email
+  }
 }
 
 // this'll print the email address for user #4002
