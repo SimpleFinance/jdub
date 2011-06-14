@@ -56,6 +56,27 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
     conn.close()
   }
 
+  def transaction[A](f: Transaction => A): A = {
+    val conn = source.getConnection
+    conn.setAutoCommit(false)
+    val txn = new Transaction(conn)
+    try {
+      log.debug("Starting transaction")
+      val result = f(txn)
+      log.debug("Committing transaction")
+      conn.commit()
+      result
+    } catch {
+      case e => {
+        log.error(e, "Exception thrown in transaction scope; aborting transaction")
+        conn.rollback()
+        throw e
+      }
+    } finally {
+      conn.close()
+    }
+  }
+
   /**
    * Returns {@code true} if we can talk to the database.
    */

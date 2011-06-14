@@ -3,6 +3,7 @@ package com.codahale.jdub.tests
 import com.codahale.simplespec.Spec
 import java.util.concurrent.atomic.AtomicInteger
 import com.codahale.jdub._
+import java.lang.IllegalArgumentException
 
 class DatabaseSpec extends Spec {
   Class.forName("org.hsqldb.jdbcDriver")
@@ -30,6 +31,40 @@ class DatabaseSpec extends Spec {
 
     def `returns empty sets` = {
       db(AgeQuery("Captain Fuzzypants McFrankface")) must beNone
+    }
+
+    class `transaction` {
+      def `commits by default` = {
+        db.transaction { txn =>
+          txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+        }
+
+        db(AgesQuery()) must beEqualTo(Set(29, 30, 402, 5))
+      }
+
+      def `can rollback` = {
+        db.transaction { txn =>
+          txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+
+          txn.rollback()
+        }
+
+        db(AgesQuery()) must beEqualTo(Set(29, 30, 402))
+      }
+
+      def `rolls back the transaction if an exception is thrown` = {
+        def inserting() {
+          db.transaction { txn =>
+            txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+
+            throw new IllegalArgumentException("OH NOES")
+          }
+        }
+        
+        inserting() must throwA[IllegalArgumentException]
+
+        db(AgesQuery()) must beEqualTo(Set(29, 30, 402))
+      }
     }
   }
 }
