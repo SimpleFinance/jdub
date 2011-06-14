@@ -46,20 +46,26 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-case class GetUserEmail(userId: Long) extends Query[Option[String]] {
+case class GetUser(userId: Long) extends Query[Option[User]] {
   val sql = trim("""
-SELECT email
+SELECT id, email, name
   FROM users
  WHERE id = ?
 """)
 
   val values = userId :: Nil
   
-  def reduce(results: Iterator[Row]) = results.map { _.string("email") }.toStream.headOption
+  def reduce(results: Iterator[Row]) = {
+    for (row <- results;
+         id <- row.long("id");
+         email <- row.string("email");
+         name <- row.string("name"))
+      yield User(id, email, name)
+  }.toStream.headOption
 }
 
-// this'll print the email address for user #4002
-println(db(GetUserEmail(4002)))
+// this'll print the user record for user #4002
+println(db(GetUser(4002)))
 ```
 
 **Fourth**, execute some statements:
