@@ -8,9 +8,9 @@ Requirements
 ------------
 
 * Java SE 6
-* Scala 2.8.1
+* Scala 2.8.1 or 2.9.0-1
 * Metrics 2.0.0-BETA13
-* Logula 2.1.1
+* Logula 2.1.2
 * Tomcat DBCP (not the app server)
 
 How To Use
@@ -55,9 +55,7 @@ SELECT email
 
   val values = userId :: Nil
   
-  def reduce(results: Vector[Vector[Any]]) = results.collectFirst {
-    case Vector(email: String) => email
-  }
+  def reduce(results: Iterator[Row]) = results.map { _.string("email") }.toStream.headOption
 }
 
 // this'll print the email address for user #4002

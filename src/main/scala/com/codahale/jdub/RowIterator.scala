@@ -2,8 +2,8 @@ package com.codahale.jdub
 
 import java.sql.ResultSet
 
-private class ValueIterator(rs: ResultSet) extends Iterator[IndexedSeq[Value]] {
-  private val values = (1 to rs.getMetaData.getColumnCount).map { new Value(rs, _) }.toIndexedSeq
+class RowIterator(rs: ResultSet) extends Iterator[Row] {
+  private val row = new Row(rs)
   private var advanced, canAdvance = false
 
   def hasNext = {
@@ -16,6 +16,6 @@ private class ValueIterator(rs: ResultSet) extends Iterator[IndexedSeq[Value]] {
 
   def next() = if (hasNext) {
     advanced = false
-    values
+    row
   } else Iterator.empty.next()
 }

@@ -41,7 +41,7 @@ case class AgesQuery() extends Query[Set[Int]]() {
 
   val values = Nil
 
-  def reduce(results: Iterator[IndexedSeq[Value]]) = results.map { _.head.toInt }.toSet
+  def reduce(results: Iterator[Row]) = results.flatMap { _.int(0) }.toSet
 }
 
 case class AgeQuery(name: String) extends Query[Option[Int]] {
@@ -49,7 +49,7 @@ case class AgeQuery(name: String) extends Query[Option[Int]] {
 
   val values = name :: Nil
 
-  def reduce(results: Iterator[IndexedSeq[Value]]) = results.map { _.head.toInt }.toSeq.headOption
+  def reduce(results: Iterator[Row]) = results.flatMap { _.int(0) }.toStream.headOption
 }
 
 case class EmailQuery() extends Query[Seq[Option[String]]] {
@@ -57,5 +57,5 @@ case class EmailQuery() extends Query[Seq[Option[String]]] {
 
   val values = Nil
 
-  def reduce(results: Iterator[IndexedSeq[Value]]) = results.map { _.head.nullable.toUtf8String }.toIndexedSeq
+  def reduce(results: Iterator[Row]) = results.map { _.string(0) }.toIndexedSeq
 }

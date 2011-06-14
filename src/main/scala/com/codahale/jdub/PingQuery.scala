@@ -9,6 +9,5 @@ object PingQuery extends Query[Boolean] {
 
   val values = Nil
 
-  def reduce(results: Iterator[IndexedSeq[Value]]) =
-    results.flatMap { _.toIterator.map { _.toInt } }.toList == List(1)
+  def reduce(results: Iterator[Row]) = results.exists { _.int(0) == Some(1) }
 }
