@@ -8,9 +8,9 @@ Requirements
 ------------
 
 * Java SE 6
-* Scala 2.8.1
-* Metrics 2.0.0-BETA12
-* Logula 2.1.1
+* Scala 2.8.1 or 2.9.0-1
+* Metrics 2.0.0-BETA13
+* Logula 2.1.2
 * Tomcat DBCP (not the app server)
 
 How To Use
@@ -18,9 +18,21 @@ How To Use
 
 **First**, specify Jdub as a dependency:
 
-```scala
-val codaRepo = "Coda Hale's Repository" at "http://repo.codahale.com/"
-val jdub = "com.codahale" %% "jdub" % "0.0.1"
+```xml
+<repositories>
+  <repository>
+    <id>repo.codahale.com</id>
+    <url>http://repo.codahale.com</url>
+  </repository>
+</repositories>
+
+<dependencies>
+  <dependency>
+    <groupId>com.codahale</groupId>
+    <artifactId>jdub_${scala.version}</artifactId>
+    <version>0.0.2</version>
+  </dependency>
+</dependencies>
 ```
 
 (Don't forget to include your JDBC driver!)
@@ -34,21 +46,26 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-case class GetUserEmail(userId: Long) extends Query[Option[String]] {
+case class GetUser(userId: Long) extends Query[Option[User]] {
   val sql = trim("""
-SELECT email
+SELECT id, email, name
   FROM users
  WHERE id = ?
 """)
 
   val values = userId :: Nil
   
-  def reduce(results: Iterator[IndexedSeq[Value]]) =
-    results.toSeq.headOption.map { _.head.toString }
+  def reduce(results: Iterator[Row]) = {
+    for (row <- results;
+         id <- row.long("id");
+         email <- row.string("email");
+         name <- row.string("name"))
+      yield User(id, email, name)
+  }.toStream.headOption
 }
 
-// this'll print the email address for user #4002
-println(db(GetUserEmail(4002)))
+// this'll print the user record for user #4002
+println(db(GetUser(4002)))
 ```
 
 **Fourth**, execute some statements:

@@ -1,56 +1,85 @@
 package com.codahale.jdub
 
-import java.sql.PreparedStatement
+import java.sql
 import javax.sql.DataSource
-import com.codahale.logula.Logging
 import com.yammer.metrics.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
 
 object Database {
-  import GenericObjectPool._
-
   /**
    * Create a pool of connections to the given database.
+   *
+   * @param url the JDBC url
+   * @param username the database user
+   * @param password the database password
    */
   def connect(url: String,
               username: String,
               password: String,
-              maxWaitForConnectionInMS: Long = DEFAULT_MAX_WAIT,
-              maxSize: Int = DEFAULT_MAX_ACTIVE,
-              minSize: Int = DEFAULT_MIN_IDLE,
-              checkConnectionBeforeQuery: Boolean = DEFAULT_TEST_ON_BORROW,
-              checkConnectionHealthWhenIdleForMS: Long = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
-              closeConnectionIfIdleForMS: Long = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
-              healthCheckQuery: String = prependComment(PingQuery, PingQuery.sql)) = {
-    val c = new GenericObjectPool.Config
-    c.maxWait = maxWaitForConnectionInMS
-    c.maxIdle = maxSize
-    c.maxActive = maxSize
-    c.minIdle = minSize
-    c.testOnBorrow = checkConnectionBeforeQuery
-    c.timeBetweenEvictionRunsMillis = checkConnectionHealthWhenIdleForMS
-    c.minEvictableIdleTimeMillis = closeConnectionIfIdleForMS
-
+              maxWaitForConnectionInMS: Long = 8,
+              maxSize: Int = 8,
+              minSize: Int = 0,
+              checkConnectionWhileIdle: Boolean = true,
+              checkConnectionHealthWhenIdleForMS: Long = 10000,
+              closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
+              healthCheckQuery: String = Connection.prependComment(PingQuery, PingQuery.sql)) = {
     val factory = new DriverManagerConnectionFactory(url, username, password)
-    val pool = new GenericObjectPool(null, c)
-    val poolableConnectionFactory = new PoolableConnectionFactory(
+    val pool = new GenericObjectPool(null)
+    pool.setMaxWait(maxWaitForConnectionInMS)
+    pool.setMaxIdle(maxSize)
+    pool.setMaxActive(maxSize)
+    pool.setMinIdle(minSize)
+    pool.setTestWhileIdle(checkConnectionWhileIdle)
+    pool.setTimeBetweenEvictionRunsMillis(checkConnectionHealthWhenIdleForMS)
+    pool.setMinEvictableIdleTimeMillis(closeConnectionIfIdleForMS)
+
+    // this constructor sets itself as the factory of the pool
+    new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database(new PoolingDataSource(pool))
+    new Database(new PoolingDataSource(pool), pool)
   }
 
-  private def prependComment(obj: Object, sql: String) =
-    "/* %s */ %s".format(obj.getClass.getSimpleName.replace("$", ""), sql)
 
-  def poop = prependComment(PingQuery, PingQuery.sql)
 }
 
 /**
- * A database.
+ * A set of pooled connections to a database.
  */
-class Database(source: DataSource) extends Instrumented with Logging {
-  import Database._
+class Database protected(source: DataSource, pool: GenericObjectPool)
+  extends Connection with Instrumented {
+
+  protected def openConnection() = source.getConnection
+
+  protected def closeConnection(conn: sql.Connection) {
+    conn.close()
+  }
+
+  /**
+   * Opens a transaction which is committed after `f` is called. If `f` throws
+   * an exception, the transaction is rolled back.
+   */
+  def transaction[A](f: Transaction => A): A = {
+    val conn = openConnection()
+    conn.setAutoCommit(false)
+    val txn = new Transaction(conn)
+    try {
+      log.debug("Starting transaction")
+      val result = f(txn)
+      log.debug("Committing transaction")
+      conn.commit()
+      result
+    } catch {
+      case e => {
+        log.error(e, "Exception thrown in transaction scope; aborting transaction")
+        conn.rollback()
+        throw e
+      }
+    } finally {
+      closeConnection(conn)
+    }
+  }
 
   /**
    * Returns {@code true} if we can talk to the database.
@@ -58,79 +87,9 @@ class Database(source: DataSource) extends Instrumented with Logging {
   def ping() = apply(PingQuery)
 
   /**
-   * Performs a query and returns the results.
+   * Closes all connections to the database.
    */
-  def apply[A](query: RawQuery[A]): A = {
-    query.timer.time {
-      val connection = source.getConnection
-      try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
-        }
-        val stmt = connection.prepareStatement(prependComment(query, query.sql))
-        try {
-          prepare(stmt, query.values)
-          val results = stmt.executeQuery()
-          try {
-            query.handle(results)
-          } finally {
-            results.close()
-          }
-        } finally {
-          stmt.close()
-        }
-      } finally {
-        connection.close()
-      }
-    }
-  }
-
-  /**
-   * Performs a query and returns the results.
-   */
-  def query[A](query: RawQuery[A]): A = apply(query)
-
-  /**
-   * Executes an update, insert, delete, or DDL statement.
-   */
-  def execute(statement: Statement) = {
-    statement.timer.time {
-      val connection = source.getConnection
-      try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
-        }
-        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
-        try {
-          prepare(stmt, statement.values)
-          stmt.executeUpdate()
-        } finally {
-          stmt.close()
-        }
-      } finally {
-        connection.close()
-      }
-    }
-  }
-
-  /**
-   * Executes an update statement.
-   */
-  def update(statement: Statement) = execute(statement)
-
-  /**
-   * Executes an insert statement.
-   */
-  def insert(statement: Statement) = execute(statement)
-
-  /**
-   * Executes a delete statement.
-   */
-  def delete(statement: Statement) = execute(statement)
-
-  private def prepare(stmt: PreparedStatement, values: Seq[Any]) {
-    for ((v, i) <- values.zipWithIndex) {
-      stmt.setObject(i + 1, v.asInstanceOf[AnyRef])
-    }
+  def close() {
+    pool.close()
   }
 }
