@@ -1,7 +1,6 @@
 package com.codahale.jdub
 
 import java.sql.ResultSet
-import scala.Some
 
 /**
   * A value in a result set which cannot be `NULL`. Convertible to other types.

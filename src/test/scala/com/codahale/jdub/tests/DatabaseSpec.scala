@@ -41,7 +41,7 @@ case class AgesQuery() extends Query[Set[Int]]() {
 
   val values = Nil
 
-  def reduce(results: Iterator[IndexedSeq[Value]]) = results.map {_.head.toInt}.toSet
+  def reduce(results: Iterator[IndexedSeq[Value]]) = results.map { _.head.toInt }.toSet
 }
 
 case class AgeQuery(name: String) extends Query[Option[Int]] {
