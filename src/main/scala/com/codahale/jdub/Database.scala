@@ -56,8 +56,12 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
     conn.close()
   }
 
+  /**
+   * Opens a transaction which is committed after `f` is called. If `f` throws
+   * an exception, the transaction is rolled back.
+   */
   def transaction[A](f: Transaction => A): A = {
-    val conn = source.getConnection
+    val conn = openConnection()
     conn.setAutoCommit(false)
     val txn = new Transaction(conn)
     try {
@@ -73,7 +77,7 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
         throw e
       }
     } finally {
-      conn.close()
+      closeConnection(conn)
     }
   }
 

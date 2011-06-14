@@ -9,6 +9,9 @@ class Transaction(conn: sql.Connection) extends Connection {
     // don't actually close it!
   }
 
+  /**
+   * Roll back the transaction.
+   */
   def rollback() {
     conn.rollback()
   }
