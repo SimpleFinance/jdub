@@ -1,10 +1,10 @@
 package com.codahale.jdub
 
-import java.sql
 import javax.sql.DataSource
 import com.yammer.metrics.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
+import com.codahale.logula.Logging
 
 object Database {
   /**
@@ -23,7 +23,7 @@ object Database {
               checkConnectionWhileIdle: Boolean = true,
               checkConnectionHealthWhenIdleForMS: Long = 10000,
               closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
-              healthCheckQuery: String = Connection.prependComment(PingQuery, PingQuery.sql)) = {
+              healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql)) = {
     val factory = new DriverManagerConnectionFactory(url, username, password)
     val pool = new GenericObjectPool(null)
     pool.setMaxWait(maxWaitForConnectionInMS)
@@ -48,36 +48,32 @@ object Database {
  * A set of pooled connections to a database.
  */
 class Database protected(source: DataSource, pool: GenericObjectPool)
-  extends Connection with Instrumented {
+  extends Logging with Instrumented {
 
-  protected def openConnection() = source.getConnection
-
-  protected def closeConnection(conn: sql.Connection) {
-    conn.close()
-  }
+  import Utils._
 
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
    */
   def transaction[A](f: Transaction => A): A = {
-    val conn = openConnection()
-    conn.setAutoCommit(false)
-    val txn = new Transaction(conn)
+    val connection = source.getConnection
+    connection.setAutoCommit(false)
+    val txn = new Transaction(connection)
     try {
       log.debug("Starting transaction")
       val result = f(txn)
       log.debug("Committing transaction")
-      conn.commit()
+      connection.commit()
       result
     } catch {
       case e => {
         log.error(e, "Exception thrown in transaction scope; aborting transaction")
-        conn.rollback()
+        connection.rollback()
         throw e
       }
     } finally {
-      closeConnection(conn)
+      connection.close()
     }
   }
 
@@ -85,6 +81,77 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
    * Returns {@code true} if we can talk to the database.
    */
   def ping() = apply(PingQuery)
+
+  /**
+   * Performs a query and returns the results.
+   */
+  def apply[A](query: RawQuery[A]): A = {
+    query.timer.time {
+      val connection = source.getConnection
+      try {
+        if (log.isDebugEnabled) {
+          log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
+        }
+        val stmt = connection.prepareStatement(prependComment(query, query.sql))
+        try {
+          prepare(stmt, query.values)
+          val results = stmt.executeQuery()
+          try {
+            query.handle(results)
+          } finally {
+            results.close()
+          }
+        } finally {
+          stmt.close()
+        }
+      } finally {
+        connection.close()
+      }
+    }
+  }
+
+  /**
+   * Performs a query and returns the results.
+   */
+  def query[A](query: RawQuery[A]): A = apply(query)
+
+  /**
+   * Executes an update, insert, delete, or DDL statement.
+   */
+  def execute(statement: Statement) = {
+    statement.timer.time {
+      val connection = source.getConnection
+      try {
+        if (log.isDebugEnabled) {
+          log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
+        }
+        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
+        try {
+          prepare(stmt, statement.values)
+          stmt.executeUpdate()
+        } finally {
+          stmt.close()
+        }
+      } finally {
+        connection.close()
+      }
+    }
+  }
+
+  /**
+   * Executes an update statement.
+   */
+  def update(statement: Statement) = execute(statement)
+
+  /**
+   * Executes an insert statement.
+   */
+  def insert(statement: Statement) = execute(statement)
+
+  /**
+   * Executes a delete statement.
+   */
+  def delete(statement: Statement) = execute(statement)
 
   /**
    * Closes all connections to the database.
