@@ -18,6 +18,7 @@ object Database {
   def connect(url: String,
               username: String,
               password: String,
+              name: String = null,
               maxWaitForConnectionInMS: Long = 8,
               maxSize: Int = 8,
               minSize: Int = 0,
@@ -47,7 +48,7 @@ object Database {
     new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database(new PoolingDataSource(pool), pool)
+    new Database(new PoolingDataSource(pool), pool, name)
   }
 
 
@@ -56,8 +57,12 @@ object Database {
 /**
  * A set of pooled connections to a database.
  */
-class Database protected(source: DataSource, pool: GenericObjectPool)
+class Database protected(source: DataSource, pool: GenericObjectPool, name: String)
   extends Logging with Instrumented {
+
+  metrics.gauge("active-connections", name) { pool.getNumActive }
+  metrics.gauge("idle-connections", name)   { pool.getNumIdle }
+  metrics.gauge("total-connections", name)  { pool.getNumIdle + pool.getNumActive }
 
   import Utils._
 
