@@ -5,6 +5,7 @@ import com.yammer.metrics.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
 import com.codahale.logula.Logging
+import java.util.Properties
 
 object Database {
   /**
@@ -23,8 +24,16 @@ object Database {
               checkConnectionWhileIdle: Boolean = true,
               checkConnectionHealthWhenIdleForMS: Long = 10000,
               closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
-              healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql)) = {
-    val factory = new DriverManagerConnectionFactory(url, username, password)
+              healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql),
+              jdbcProperties: Map[String, String] = Map.empty) = {
+    val properties = new Properties
+    for ((k, v) <- jdbcProperties) {
+      properties.setProperty(k, v)
+    }
+    properties.setProperty("username", username)
+    properties.setProperty("password", password)
+
+    val factory = new DriverManagerConnectionFactory(url, properties)
     val pool = new GenericObjectPool(null)
     pool.setMaxWait(maxWaitForConnectionInMS)
     pool.setMaxIdle(maxSize)
