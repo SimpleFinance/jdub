@@ -73,12 +73,12 @@
         </dependency>
         <dependency>
             <groupId>com.yammer.metrics</groupId>
-            <artifactId>metrics-core_2.9.0</artifactId>
+            <artifactId>metrics-core_${scala.version}</artifactId>
             <version>2.0.0-BETA13</version>
         </dependency>
         <dependency>
             <groupId>com.codahale</groupId>
-            <artifactId>logula_2.9.0</artifactId>
+            <artifactId>logula_${scala.version}</artifactId>
             <version>2.1.2</version>
         </dependency>
         <dependency>
