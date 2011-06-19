@@ -79,12 +79,12 @@ case class AgesQuery() extends FlatCollectionQuery[Set, Int](Set) {
   def flatMap(row: Row) = row.int(0)
 }
 
-case class AgeQuery(name: String) extends Query[Option[Int]] {
+case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
   val sql = trim("SELECT age FROM people WHERE name = ?")
 
   val values = name :: Nil
 
-  def reduce(rows: Iterator[Row]) = rows.flatMap { _.int(0).toIterator }.toStream.headOption
+  def flatMap(row: Row) = row.int(0)
 }
 
 case class EmailQuery() extends CollectionQuery[Vector, Option[String]](Vector) {
