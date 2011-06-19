@@ -11,7 +11,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[String].
    */
-  def string(index: Int)   = extract(rs.getString(index + 1))
+  def string(index: Int) = extract(rs.getString(index + 1))
 
   /**
    * Extract the value with the given name as an Option[String].
@@ -21,7 +21,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Boolean].
    */
-  def boolean(index: Int)   = extract(rs.getBoolean(index + 1))
+  def boolean(index: Int) = extract(rs.getBoolean(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Boolean].
@@ -31,7 +31,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Byte].
    */
-  def byte(index: Int)   = extract(rs.getByte(index + 1))
+  def byte(index: Int) = extract(rs.getByte(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Byte].
@@ -41,7 +41,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Short].
    */
-  def short(index: Int)   = extract(rs.getShort(index + 1))
+  def short(index: Int) = extract(rs.getShort(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Short].
@@ -52,7 +52,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Int].
    */
-  def int(index: Int)   = extract(rs.getInt(index + 1))
+  def int(index: Int) = extract(rs.getInt(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Int].
@@ -62,7 +62,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Long].
    */
-  def long(index: Int)   = extract(rs.getLong(index + 1))
+  def long(index: Int) = extract(rs.getLong(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Long].
@@ -72,7 +72,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Float].
    */
-  def float(index: Int)   = extract(rs.getFloat(index + 1))
+  def float(index: Int) = extract(rs.getFloat(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Float].
@@ -82,7 +82,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Double].
    */
-  def double(index: Int)   = extract(rs.getDouble(index + 1))
+  def double(index: Int) = extract(rs.getDouble(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Double].
@@ -92,7 +92,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[BigDecimal].
    */
-  def bigDecimal(index: Int)   = extract(rs.getBigDecimal(index + 1))
+  def bigDecimal(index: Int) = extract(rs.getBigDecimal(index + 1))
 
   /**
    * Extract the value with the given name as an Option[BigDecimal].
@@ -102,7 +102,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Array[Byte]].
    */
-  def bytes(index: Int)   = extract(rs.getBytes(index + 1))
+  def bytes(index: Int) = extract(rs.getBytes(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Array[Byte]].
@@ -112,7 +112,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Date].
    */
-  def date(index: Int)   = extract(rs.getDate(index + 1))
+  def date(index: Int) = extract(rs.getDate(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Date].
@@ -122,7 +122,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Time].
    */
-  def time(index: Int)   = extract(rs.getTime(index + 1))
+  def time(index: Int) = extract(rs.getTime(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Time].
@@ -132,7 +132,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Timestamp].
    */
-  def timestamp(index: Int)   = extract(rs.getTimestamp(index + 1))
+  def timestamp(index: Int) = extract(rs.getTimestamp(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Timestamp].
@@ -142,7 +142,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[InputStream].
    */
-  def asciiStream(index: Int)   = extract(rs.getAsciiStream(index + 1))
+  def asciiStream(index: Int) = extract(rs.getAsciiStream(index + 1))
 
   /**
    * Extract the value with the given name as an Option[InputStream].
@@ -152,7 +152,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[InputStream].
    */
-  def characterStream(index: Int)   = extract(rs.getCharacterStream(index + 1))
+  def characterStream(index: Int) = extract(rs.getCharacterStream(index + 1))
 
   /**
    * Extract the value with the given name as an Option[InputStream].
@@ -162,7 +162,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[InputStream].
    */
-  def binaryStream(index: Int)   = extract(rs.getBinaryStream(index + 1))
+  def binaryStream(index: Int) = extract(rs.getBinaryStream(index + 1))
 
   /**
    * Extract the value with the given name as an Option[InputStream].
@@ -172,7 +172,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Any].
    */
-  def any(index: Int): Option[Any]   = extract(rs.getObject(index + 1))
+  def any(index: Int): Option[Any] = extract(rs.getObject(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Any].
@@ -182,7 +182,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Array].
    */
-  def sqlArray(index: Int)   = extract(rs.getArray(index + 1))
+  def sqlArray(index: Int) = extract(rs.getArray(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Array].
@@ -192,7 +192,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Blob].
    */
-  def blob(index: Int)   = extract(rs.getBlob(index + 1))
+  def blob(index: Int) = extract(rs.getBlob(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Blob].
@@ -202,7 +202,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Clob].
    */
-  def clob(index: Int)   = extract(rs.getClob(index + 1))
+  def clob(index: Int) = extract(rs.getClob(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Clob].
@@ -212,7 +212,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Ref].
    */
-  def ref(index: Int)   = extract(rs.getRef(index + 1))
+  def ref(index: Int) = extract(rs.getRef(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Ref].
@@ -222,7 +222,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[String].
    */
-  def nString(index: Int)   = extract(rs.getNString(index + 1))
+  def nString(index: Int) = extract(rs.getNString(index + 1))
 
   /**
    * Extract the value with the given name as an Option[String].
@@ -232,7 +232,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[Reader].
    */
-  def nCharacterStream(index: Int)   = extract(rs.getNCharacterStream(index + 1))
+  def nCharacterStream(index: Int) = extract(rs.getNCharacterStream(index + 1))
 
   /**
    * Extract the value with the given name as an Option[Reader].
@@ -242,7 +242,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[NClob].
    */
-  def nClob(index: Int)   = extract(rs.getNClob(index + 1))
+  def nClob(index: Int) = extract(rs.getNClob(index + 1))
 
   /**
    * Extract the value with the given name as an Option[NClob].
@@ -252,7 +252,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[SQLXML].
    */
-  def sqlXML(index: Int)   = extract(rs.getSQLXML(index + 1))
+  def sqlXML(index: Int) = extract(rs.getSQLXML(index + 1))
 
   /**
    * Extract the value with the given name as an Option[SQLXML].
@@ -262,7 +262,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[URL].
    */
-  def url(index: Int)   = extract(rs.getURL(index + 1))
+  def url(index: Int) = extract(rs.getURL(index + 1))
 
   /**
    * Extract the value with the given name as an Option[URL].
