@@ -9,9 +9,9 @@ import scala.collection.generic.GenericCompanion
 abstract class CollectionQuery[CC[A] <: Traversable[A], A](companion: GenericCompanion[CC]) extends Query[CC[A]] {
   def map(row: Row): A
   
-  final def reduce(results: Iterator[Row]): CC[A] = {
+  final def reduce(rows: Iterator[Row]): CC[A] = {
     val builder = companion.newBuilder[A]
-    for (row <- results) {
+    for (row <- rows) {
       builder += map(row)
     }
     builder.result()
@@ -25,9 +25,9 @@ abstract class CollectionQuery[CC[A] <: Traversable[A], A](companion: GenericCom
 abstract class FlatCollectionQuery[CC[A] <: Traversable[A], A](companion: GenericCompanion[CC]) extends Query[CC[A]] {
   def flatMap(row: Row): Option[A]
 
-  final def reduce(results: Iterator[Row]) = {
+  final def reduce(rows: Iterator[Row]) = {
     val builder = companion.newBuilder[A]
-    for (row <- results;
+    for (row <- rows;
          value <- flatMap(row)) {
       builder += value
     }

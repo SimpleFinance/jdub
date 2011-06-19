@@ -84,7 +84,7 @@ case class AgeQuery(name: String) extends Query[Option[Int]] {
 
   val values = name :: Nil
 
-  def reduce(results: Iterator[Row]) = results.flatMap { _.int(0).toIterator }.toStream.headOption
+  def reduce(rows: Iterator[Row]) = rows.flatMap { _.int(0).toIterator }.toStream.headOption
 }
 
 case class EmailQuery() extends CollectionQuery[Vector, Option[String]](Vector) {

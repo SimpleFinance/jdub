@@ -9,5 +9,5 @@ object PingQuery extends Query[Boolean] {
 
   val values = Nil
 
-  def reduce(results: Iterator[Row]) = results.exists { _.int(0) == Some(1) }
+  def reduce(rows: Iterator[Row]) = rows.exists { _.int(0) == Some(1) }
 }
