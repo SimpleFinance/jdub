@@ -31,7 +31,7 @@ object Database {
     for ((k, v) <- jdbcProperties) {
       properties.setProperty(k, v)
     }
-    properties.setProperty("username", username)
+    properties.setProperty("user", username)
     properties.setProperty("password", password)
 
     val factory = new DriverManagerConnectionFactory(url, properties)
