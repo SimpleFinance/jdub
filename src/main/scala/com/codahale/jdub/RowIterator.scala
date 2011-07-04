@@ -18,4 +18,6 @@ class RowIterator(rs: ResultSet) extends Iterator[Row] {
     advanced = false
     row
   } else Iterator.empty.next()
+  
+  override def toSeq = toIndexedSeq
 }
