@@ -63,6 +63,7 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
   metrics.gauge("active-connections", name) { pool.getNumActive }
   metrics.gauge("idle-connections", name)   { pool.getNumIdle }
   metrics.gauge("total-connections", name)  { pool.getNumIdle + pool.getNumActive }
+  private val poolWait = metrics.timer("pool-wait")
 
   import Utils._
 
@@ -71,7 +72,7 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * an exception, the transaction is rolled back.
    */
   def transaction[A](f: Transaction => A): A = {
-    val connection = source.getConnection
+    val connection = poolWait.time { source.getConnection }
     connection.setAutoCommit(false)
     val txn = new Transaction(connection)
     try {
@@ -100,8 +101,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Performs a query and returns the results.
    */
   def apply[A](query: RawQuery[A]): A = {
+    val connection = poolWait.time { source.getConnection }
     query.timer.time {
-      val connection = source.getConnection
       try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
@@ -133,8 +134,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Executes an update, insert, delete, or DDL statement.
    */
   def execute(statement: Statement) = {
+    val connection = poolWait.time { source.getConnection }
     statement.timer.time {
-      val connection = source.getConnection
       try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
