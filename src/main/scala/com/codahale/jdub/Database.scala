@@ -5,6 +5,7 @@ import com.yammer.metrics.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
 import com.codahale.logula.Logging
+import java.util.Properties
 
 object Database {
   /**
@@ -17,14 +18,23 @@ object Database {
   def connect(url: String,
               username: String,
               password: String,
+              name: String = null,
               maxWaitForConnectionInMS: Long = 8,
               maxSize: Int = 8,
               minSize: Int = 0,
               checkConnectionWhileIdle: Boolean = true,
               checkConnectionHealthWhenIdleForMS: Long = 10000,
               closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
-              healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql)) = {
-    val factory = new DriverManagerConnectionFactory(url, username, password)
+              healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql),
+              jdbcProperties: Map[String, String] = Map.empty) = {
+    val properties = new Properties
+    for ((k, v) <- jdbcProperties) {
+      properties.setProperty(k, v)
+    }
+    properties.setProperty("user", username)
+    properties.setProperty("password", password)
+
+    val factory = new DriverManagerConnectionFactory(url, properties)
     val pool = new GenericObjectPool(null)
     pool.setMaxWait(maxWaitForConnectionInMS)
     pool.setMaxIdle(maxSize)
@@ -38,7 +48,7 @@ object Database {
     new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database(new PoolingDataSource(pool), pool)
+    new Database(new PoolingDataSource(pool), pool, name)
   }
 
 
@@ -47,8 +57,13 @@ object Database {
 /**
  * A set of pooled connections to a database.
  */
-class Database protected(source: DataSource, pool: GenericObjectPool)
+class Database protected(source: DataSource, pool: GenericObjectPool, name: String)
   extends Logging with Instrumented {
+
+  metrics.gauge("active-connections", name) { pool.getNumActive }
+  metrics.gauge("idle-connections", name)   { pool.getNumIdle }
+  metrics.gauge("total-connections", name)  { pool.getNumIdle + pool.getNumActive }
+  private val poolWait = metrics.timer("pool-wait")
 
   import Utils._
 
@@ -57,7 +72,7 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
    * an exception, the transaction is rolled back.
    */
   def transaction[A](f: Transaction => A): A = {
-    val connection = source.getConnection
+    val connection = poolWait.time { source.getConnection }
     connection.setAutoCommit(false)
     val txn = new Transaction(connection)
     try {
@@ -86,8 +101,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
    * Performs a query and returns the results.
    */
   def apply[A](query: RawQuery[A]): A = {
+    val connection = poolWait.time { source.getConnection }
     query.timer.time {
-      val connection = source.getConnection
       try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
@@ -119,8 +134,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool)
    * Executes an update, insert, delete, or DDL statement.
    */
   def execute(statement: Statement) = {
+    val connection = poolWait.time { source.getConnection }
     statement.timer.time {
-      val connection = source.getConnection
       try {
         if (log.isDebugEnabled) {
           log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
