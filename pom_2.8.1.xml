@@ -6,7 +6,7 @@
 
     <groupId>com.codahale</groupId>
     <artifactId>jdub_2.8.1</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.4</version>
     <name>Jdub for Scala ${scala.version}</name>
 
     <properties>
