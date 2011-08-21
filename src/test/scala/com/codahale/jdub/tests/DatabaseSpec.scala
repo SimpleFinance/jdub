@@ -18,19 +18,19 @@ class DatabaseSpec extends Spec {
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Old Guy", null, 402)))
 
     @test def `returns sets of results` = {
-      db(AgesQuery()) must beEqualTo(Set(29, 30, 402))
+      db(AgesQuery()).mustEqual(Set(29, 30, 402))
     }
 
     @test def `returns sets of results with null values` = {
-      db(EmailQuery()) must beEqualTo(Seq(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None))
+      db(EmailQuery()).mustEqual(Seq(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None))
     }
 
     @test def `returns single rows` = {
-      db(AgeQuery("Coda Hale")) must beSome(29)
+      db(AgeQuery("Coda Hale")).mustBeSome(29)
     }
 
     @test def `returns empty sets` = {
-      db(AgeQuery("Captain Fuzzypants McFrankface")) must beNone
+      db(AgeQuery("Captain Fuzzypants McFrankface")).mustBeNone()
     }
 
     class `transaction` {
@@ -39,7 +39,7 @@ class DatabaseSpec extends Spec {
           txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
         }
 
-        db(AgesQuery()) must beEqualTo(Set(29, 30, 402, 5))
+        db(AgesQuery()).mustEqual(Set(29, 30, 402, 5))
       }
 
       @test def `can rollback` = {
@@ -49,7 +49,7 @@ class DatabaseSpec extends Spec {
           txn.rollback()
         }
 
-        db(AgesQuery()) must beEqualTo(Set(29, 30, 402))
+        db(AgesQuery()).mustEqual(Set(29, 30, 402))
       }
 
       @test def `rolls back the transaction if an exception is thrown` = {
@@ -61,9 +61,9 @@ class DatabaseSpec extends Spec {
           }
         }
         
-        inserting() must throwA[IllegalArgumentException]
+        inserting().mustThrowAn[IllegalArgumentException]
 
-        db(AgesQuery()) must beEqualTo(Set(29, 30, 402))
+        db(AgesQuery()).mustEqual(Set(29, 30, 402))
       }
     }
   }
