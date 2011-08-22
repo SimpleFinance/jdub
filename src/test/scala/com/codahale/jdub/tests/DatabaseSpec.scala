@@ -18,19 +18,19 @@ class DatabaseSpec extends Spec {
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Old Guy", null, 402)))
 
     @test def `returns sets of results` = {
-      db(AgesQuery()).mustEqual(Set(29, 30, 402))
+      db(AgesQuery()).must(be(Set(29, 30, 402)))
     }
 
     @test def `returns sets of results with null values` = {
-      db(EmailQuery()).mustEqual(Seq(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None))
+      db(EmailQuery()).must(be(Seq(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None)))
     }
 
     @test def `returns single rows` = {
-      db(AgeQuery("Coda Hale")).mustBeSome(29)
+      db(AgeQuery("Coda Hale")).must(be(Some(29)))
     }
 
     @test def `returns empty sets` = {
-      db(AgeQuery("Captain Fuzzypants McFrankface")).mustBeNone()
+      db(AgeQuery("Captain Fuzzypants McFrankface")).must(be(None))
     }
 
     class `transaction` {
@@ -39,7 +39,7 @@ class DatabaseSpec extends Spec {
           txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
         }
 
-        db(AgesQuery()).mustEqual(Set(29, 30, 402, 5))
+        db(AgesQuery()).must(be(Set(29, 30, 402, 5)))
       }
 
       @test def `can rollback` = {
@@ -49,21 +49,19 @@ class DatabaseSpec extends Spec {
           txn.rollback()
         }
 
-        db(AgesQuery()).mustEqual(Set(29, 30, 402))
+        db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
 
       @test def `rolls back the transaction if an exception is thrown` = {
-        def inserting() {
-          db.transaction { txn =>
+        evaluating {
+          db.transaction {txn =>
             txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
 
             throw new IllegalArgumentException("OH NOES")
           }
-        }
-        
-        inserting().mustThrowAn[IllegalArgumentException]
+        }.must(throwAn[IllegalArgumentException])
 
-        db(AgesQuery()).mustEqual(Set(29, 30, 402))
+        db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
     }
   }
