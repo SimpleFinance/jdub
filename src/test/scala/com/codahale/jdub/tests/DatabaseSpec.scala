@@ -2,7 +2,7 @@ package com.codahale.jdub.tests
 
 import java.util.concurrent.atomic.AtomicInteger
 import com.codahale.simplespec.Spec
-import com.codahale.simplespec.annotation.test
+import org.junit.Test
 import com.codahale.jdub._
 
 class DatabaseSpec extends Spec {
@@ -17,24 +17,24 @@ class DatabaseSpec extends Spec {
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Kris Gale", "kgale@yammer-inc.com", 30)))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Old Guy", null, 402)))
 
-    @test def `returns sets of results` = {
+    @Test def `returns sets of results` = {
       db(AgesQuery()).must(be(Set(29, 30, 402)))
     }
 
-    @test def `returns sets of results with null values` = {
-      db(EmailQuery()).must(be(Seq(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None)))
+    @Test def `returns sets of results with null values` = {
+      db(EmailQuery()).must(be(Vector(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None)))
     }
 
-    @test def `returns single rows` = {
+    @Test def `returns single rows` = {
       db(AgeQuery("Coda Hale")).must(be(Some(29)))
     }
 
-    @test def `returns empty sets` = {
+    @Test def `returns empty sets` = {
       db(AgeQuery("Captain Fuzzypants McFrankface")).must(be(None))
     }
 
     class `transaction` {
-      @test def `commits by default` = {
+      @Test def `commits by default` = {
         db.transaction { txn =>
           txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
         }
@@ -42,7 +42,7 @@ class DatabaseSpec extends Spec {
         db(AgesQuery()).must(be(Set(29, 30, 402, 5)))
       }
 
-      @test def `can rollback` = {
+      @Test def `can rollback` = {
         db.transaction { txn =>
           txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
 
@@ -52,7 +52,7 @@ class DatabaseSpec extends Spec {
         db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
 
-      @test def `rolls back the transaction if an exception is thrown` = {
+      @Test def `rolls back the transaction if an exception is thrown` = {
         evaluating {
           db.transaction {txn =>
             txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
