@@ -84,7 +84,7 @@
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-dbcp</artifactId>
-            <version>7.0.20</version>
+            <version>7.0.21</version>
         </dependency>
         <dependency>
             <groupId>com.codahale</groupId>
