@@ -69,7 +69,7 @@ class DatabaseSpec extends Spec {
 
 case class SQL(sql: String, values: Seq[Any] = Nil) extends Statement
 
-case class AgesQuery() extends FlatCollectionQuery[Set, Int](Set) {
+case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
   val sql = "SELECT age FROM people"
 
   val values = Nil
@@ -85,7 +85,7 @@ case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
   def flatMap(row: Row) = row.int(0)
 }
 
-case class EmailQuery() extends CollectionQuery[Vector, Option[String]](Vector) {
+case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
   val sql = trim("SELECT email FROM people")
 
   val values = Nil
