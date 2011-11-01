@@ -9,7 +9,7 @@ Requirements
 
 * Java SE 6
 * Scala 2.8.1 or 2.9.0-1 or 2.9.1
-* Metrics 2.0.0-BETA16
+* Metrics 2.0.0-BETA17
 * Logula 2.1.3
 * Tomcat DBCP (not the app server)
 
@@ -30,7 +30,7 @@ How To Use
   <dependency>
     <groupId>com.codahale</groupId>
     <artifactId>jdub_${scala.version}</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
   </dependency>
 </dependencies>
 ```
