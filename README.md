@@ -8,8 +8,8 @@ Requirements
 ------------
 
 * Java SE 6
-* Scala 2.8.1 or 2.9.0-1 or 2.9.1
-* Metrics 2.0.0-BETA17
+* Scala 2.9.1
+* Metrics 2.0.0-RC0
 * Logula 2.1.3
 * Tomcat DBCP (not the app server)
 
@@ -92,6 +92,6 @@ db.update(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
 License
 -------
 
-Copyright (c) 2011 Coda Hale
+Copyright (c) 2011-2012 Coda Hale
 
 Published under The MIT License, see LICENSE
