@@ -1,6 +1,6 @@
 package com.codahale.jdub
 
-import com.yammer.metrics.Instrumented
+import com.yammer.metrics.scala.Instrumented
 
 trait Statement extends SqlBase with Instrumented {
   private[jdub] val timer = metrics.timer("execute")
