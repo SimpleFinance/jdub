@@ -30,7 +30,7 @@ How To Use
   <dependency>
     <groupId>com.codahale</groupId>
     <artifactId>jdub_${scala.version}</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.7</version>
   </dependency>
 </dependencies>
 ```
