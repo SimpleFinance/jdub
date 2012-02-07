@@ -49,10 +49,6 @@
             <id>repo.codahale.com</id>
             <url>http://repo.codahale.com</url>
         </repository>
-        <repository>
-          <id>repo1.maven.org</id>
-          <url>http://repo1.maven.org/maven2</url>
-        </repository>
     </repositories>
 
     <pluginRepositories>
