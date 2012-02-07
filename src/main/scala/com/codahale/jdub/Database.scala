@@ -1,7 +1,7 @@
 package com.codahale.jdub
 
 import javax.sql.DataSource
-import com.yammer.metrics.Instrumented
+import com.yammer.metrics.scala.Instrumented
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
 import com.codahale.logula.Logging

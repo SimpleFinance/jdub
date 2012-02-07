@@ -1,6 +1,6 @@
 package com.codahale.jdub
 
-import com.yammer.metrics.Instrumented
+import com.yammer.metrics.scala.Instrumented
 import java.sql.ResultSet
 
 trait RawQuery[A] extends SqlBase with Instrumented {
