@@ -18,24 +18,20 @@ trait Queryable extends Logging with Instrumented {
    */
   def apply[A](connection: Connection, query: RawQuery[A]): A = {
     query.timer.time {
+      if (log.isDebugEnabled) {
+        log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
+      }
+      val stmt = connection.prepareStatement(prependComment(query, query.sql))
       try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
-        }
-        val stmt = connection.prepareStatement(prependComment(query, query.sql))
+        prepare(stmt, query.values)
+        val results = stmt.executeQuery()
         try {
-          prepare(stmt, query.values)
-          val results = stmt.executeQuery()
-          try {
-            query.handle(results)
-          } finally {
-            results.close()
-          }
+          query.handle(results)
         } finally {
-          stmt.close()
+          results.close()
         }
       } finally {
-        connection.close()
+        stmt.close()
       }
     }
   }
@@ -45,19 +41,15 @@ trait Queryable extends Logging with Instrumented {
    */
   def execute(connection: Connection, statement: Statement) = {
     statement.timer.time {
+      if (log.isDebugEnabled) {
+        log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
+      }
+      val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
       try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
-        }
-        val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
-        try {
-          prepare(stmt, statement.values)
-          stmt.executeUpdate()
-        } finally {
-          stmt.close()
-        }
+        prepare(stmt, statement.values)
+        stmt.executeUpdate()
       } finally {
-        connection.close()
+        stmt.close()
       }
     }
   }
