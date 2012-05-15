@@ -20,4 +20,6 @@ class Transaction(connection: Connection) extends Queryable {
   def rollback() {
     connection.rollback()
   }
+
+  def transaction[A](f: Transaction => A): A = f(this)
 }

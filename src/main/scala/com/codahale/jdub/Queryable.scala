@@ -56,6 +56,7 @@ trait Queryable extends Logging with Instrumented {
 
   def execute(statement: Statement)
   def apply[A](query: RawQuery[A]): A
+  def transaction[A](f: Transaction => A): A
 
   /**
    * Performs a query and returns the results.
