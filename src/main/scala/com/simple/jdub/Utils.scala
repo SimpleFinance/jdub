@@ -1,4 +1,4 @@
-package com.codahale.jdub
+package com.simple.jdub
 
 import scala.annotation.tailrec
 import java.sql.{Types, PreparedStatement}

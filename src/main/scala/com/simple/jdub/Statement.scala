@@ -1,4 +1,4 @@
-package com.codahale.jdub
+package com.simple.jdub
 
 import com.yammer.metrics.scala.Instrumented
 

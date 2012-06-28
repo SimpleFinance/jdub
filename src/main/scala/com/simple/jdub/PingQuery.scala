@@ -1,4 +1,4 @@
-package com.codahale.jdub
+package com.simple.jdub
 
 /**
  * A simple query which returns {@code true} if the server can process a simple

@@ -1,9 +1,9 @@
-package com.codahale.jdub.tests
+package com.simple.jdub.tests
 
 import java.util.concurrent.atomic.AtomicInteger
 import com.codahale.simplespec.Spec
 import org.junit.Test
-import com.codahale.jdub._
+import com.simple.jdub._
 
 class DatabaseSpec extends Spec {
   Class.forName("org.hsqldb.jdbcDriver")

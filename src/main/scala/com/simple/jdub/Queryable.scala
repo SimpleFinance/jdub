@@ -3,7 +3,7 @@
  * Author: Ian Eure <ieure@simple.com>
  */
 
-package com.codahale.jdub
+package com.simple.jdub
 
 import java.sql.Connection
 

@@ -1,4 +1,4 @@
-package com.codahale.jdub
+package com.simple.jdub
 
 /**
  * A query class which maps the first row of a result set to a value and throws

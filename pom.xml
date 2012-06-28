@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.codahale</groupId>
+    <groupId>com.simple</groupId>
     <artifactId>jdub_2.9.1</artifactId>
     <version>0.0.8.2-SNAPSHOT</version>
     <name>Jdub for Scala ${scala.version}</name>
@@ -15,8 +15,8 @@
 
     <developers>
         <developer>
-            <name>Coda Hale</name>
-            <email>coda.hale@gmail.com</email>
+            <name>Ian Eure</name>
+            <email>ian.eure@gmail.com</email>
             <timezone>-8</timezone>
         </developer>
     </developers>
@@ -30,14 +30,14 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git://github.com/codahale/jdub.git</connection>
-        <developerConnection>scm:git:git@github.com:codahale/jdub.git</developerConnection>
-        <url>http://github.com/codahale/jdub/</url>
+        <connection>scm:git:git://github.com/ieure/jdub.git</connection>
+        <developerConnection>scm:git:git@github.com:ieure/jdub.git</developerConnection>
+        <url>http://github.com/ieure/jdub/</url>
     </scm>
 
     <issueManagement>
         <system>github</system>
-        <url>http://github.com/codahale/jdub/issues#issue/</url>
+        <url>http://github.com/ieure/jdub/issues#issue/</url>
     </issueManagement>
 
     <repositories>

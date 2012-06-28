@@ -1,4 +1,4 @@
-package com.codahale.jdub
+package com.simple.jdub
 
 import javax.sql.DataSource
 import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
