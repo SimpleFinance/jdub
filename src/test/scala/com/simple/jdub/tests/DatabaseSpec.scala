@@ -64,6 +64,47 @@ class DatabaseSpec extends Spec {
         db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
     }
+
+    class `transaction scope` {
+      @Test def `commits by default` = {
+        db.transactionScope {
+          db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+        }
+
+        db(AgesQuery()).must(be(Set(29, 30, 402, 5)))
+      }
+
+      @Test def `can rollback` = {
+        db.transactionScope {
+          db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+
+          db.rollback()
+        }
+
+        db(AgesQuery()).must(be(Set(29, 30, 402)))
+      }
+
+      @Test def `rolls back the transaction if an exception is thrown` = {
+        evaluating {
+          db.transactionScope {
+            db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+
+            throw new IllegalArgumentException("OH NOES")
+          }
+        }.must(throwAn[IllegalArgumentException])
+
+        db(AgesQuery()).must(be(Set(29, 30, 402)))
+      }
+
+      @Test def `nesting not allowed` = {
+        evaluating {
+          db.transactionScope {
+            db.transactionScope {
+            }
+          }
+        }.must(throwAn[Exception])
+      }
+    }
   }
 }
 

@@ -65,6 +65,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
 
   import Utils._
 
+  private val transactionManager = new TransactionManager
+
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
@@ -91,6 +93,22 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
   }
 
   /**
+   * Opens a transaction that is implicitly used in all db calls on the current
+   * thread within the scope of `f`. If `f` throws an exception the transaction
+   * is rolled back.
+   */
+  def transactionScope[A](f: => A): A = {
+    transaction { txn =>
+      transactionManager.begin(txn)
+      try {
+        f
+      } finally {
+        transactionManager.end
+      }
+    }
+  }
+
+  /**
    * Returns {@code true} if we can talk to the database.
    */
   def ping() = apply(PingQuery)
@@ -99,11 +117,15 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Performs a query and returns the results.
    */
   def apply[A](query: RawQuery[A]): A = {
-    val connection = poolWait.time { source.getConnection }
-    try {
-      apply(connection, query)
-    } finally {
-      connection.close()
+    if (transactionManager.transactionExists) {
+      transactionManager.currentTransaction(query)
+    } else {
+      val connection = poolWait.time { source.getConnection }
+      try {
+        apply(connection, query)
+      } finally {
+        connection.close()
+      }
     }
   }
 
@@ -111,12 +133,23 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Executes an update, insert, delete, or DDL statement.
    */
   def execute(statement: Statement) = {
-    val connection = poolWait.time { source.getConnection }
-    try {
-      execute(connection, statement)
-    } finally {
-      connection.close()
+    if (transactionManager.transactionExists) {
+      transactionManager.currentTransaction.execute(statement)
+    } else {
+      val connection = poolWait.time { source.getConnection }
+      try {
+        execute(connection, statement)
+      } finally {
+        connection.close()
+      }
     }
+  }
+
+  /**
+   * Rollback any existing ambient transaction
+   */
+  def rollback() {
+    transactionManager.rollback
   }
 
   /**
