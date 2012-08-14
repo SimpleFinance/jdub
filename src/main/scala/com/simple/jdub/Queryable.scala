@@ -40,7 +40,7 @@ trait Queryable extends Logging with Instrumented {
   /**
    * Executes an update, insert, delete, or DDL statement.
    */
-  def execute(connection: Connection, statement: Statement) = {
+  def execute(connection: Connection, statement: Statement): Int = {
     statement.timer.time {
       if (log.isDebugEnabled) {
         log.debug("%s with %s".format(
@@ -56,7 +56,7 @@ trait Queryable extends Logging with Instrumented {
     }
   }
 
-  def execute(statement: Statement)
+  def execute(statement: Statement): Int
   def apply[A](query: RawQuery[A]): A
   def transaction[A](f: Transaction => A): A
 
@@ -68,15 +68,15 @@ trait Queryable extends Logging with Instrumented {
   /**
    * Executes an update statement.
    */
-  def update(statement: Statement) = execute(statement)
+  def update(statement: Statement): Int = execute(statement)
 
   /**
    * Executes an insert statement.
    */
-  def insert(statement: Statement) = execute(statement)
+  def insert(statement: Statement): Int = execute(statement)
 
   /**
    * Executes a delete statement.
    */
-  def delete(statement: Statement) = execute(statement)
+  def delete(statement: Statement): Int = execute(statement)
 }
