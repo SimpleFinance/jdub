@@ -109,6 +109,13 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
   }
 
   /**
+   * The transaction currently scoped via transactionScope.
+   */
+  def currentTransaction = {
+    transactionManager.currentTransaction
+  }
+
+  /**
    * Returns {@code true} if we can talk to the database.
    */
   def ping() = apply(PingQuery)
