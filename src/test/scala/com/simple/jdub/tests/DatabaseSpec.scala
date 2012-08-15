@@ -66,6 +66,24 @@ class DatabaseSpec extends Spec {
     }
 
     class `transaction scope` {
+      @Test def `current transaction throws when no scope` = {
+        evaluating {
+          db.currentTransaction
+        }.must(throwAn[Exception])
+      }
+
+      @Test def `rollback throws when no scope` = {
+        evaluating {
+          db.rollback()
+        }.must(throwAn[Exception])
+      }
+
+      @Test def `current transaction returns in scope` = {
+        db.transactionScope {
+          db.currentTransaction
+        }
+      }
+
       @Test def `commits by default` = {
         db.transactionScope {
           db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
@@ -103,6 +121,39 @@ class DatabaseSpec extends Spec {
             }
           }
         }.must(throwAn[Exception])
+      }
+
+      @Test def `explict transaction joins scope` = {
+        db.transactionScope {
+          val transaction = db.currentTransaction
+          db.transaction { txn =>
+            txn.must(be(transaction))
+          }
+        }
+      }
+
+      @Test def `explict transaction joins scope and rollback` = {
+        db.transactionScope {
+          db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+          db.transaction { txn =>
+            txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Other Guy", null, 6)))
+          }
+          db.rollback()
+        }
+
+        db(AgesQuery()).must(be(Set(29, 30, 402)))
+      }
+
+      @Test def `explict transaction joins scope and causes rollback` = {
+        db.transactionScope {
+          db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+          db.transaction { txn =>
+            txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Other Guy", null, 6)))
+            txn.rollback()
+          }
+        }
+
+        db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
     }
   }

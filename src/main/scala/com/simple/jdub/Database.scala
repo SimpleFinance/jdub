@@ -72,23 +72,27 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * an exception, the transaction is rolled back.
    */
   def transaction[A](f: Transaction => A): A = {
-    val connection = poolWait.time { source.getConnection }
-    connection.setAutoCommit(false)
-    val txn = new Transaction(connection)
-    try {
-      log.debug("Starting transaction")
-      val result = f(txn)
-      log.debug("Committing transaction")
-      connection.commit()
-      result
-    } catch {
-      case e => {
-        log.error(e, "Exception thrown in transaction scope; aborting transaction")
-        connection.rollback()
-        throw e
+    if (transactionManager.transactionExists) {
+      f(transactionManager.currentTransaction)
+    } else {
+      val connection = poolWait.time { source.getConnection }
+      connection.setAutoCommit(false)
+      val txn = new Transaction(connection)
+      try {
+        log.debug("Starting transaction")
+        val result = f(txn)
+        log.debug("Committing transaction")
+        connection.commit()
+        result
+      } catch {
+        case e => {
+          log.error(e, "Exception thrown in transaction scope; aborting transaction")
+          connection.rollback()
+          throw e
+        }
+      } finally {
+        connection.close()
       }
-    } finally {
-      connection.close()
     }
   }
 
