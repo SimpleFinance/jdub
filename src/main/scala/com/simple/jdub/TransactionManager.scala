@@ -24,11 +24,9 @@ class TransactionManager {
   }
 
   def begin(transaction: Transaction) {
-    if (transactionExists) {
-      throw new Exception("Nesting transactions is not allowed")
+    if (!transactionExists) {
+      localTransactionStorage.set(Some(transaction))
     }
-
-    localTransactionStorage.set(Some(transaction))
   }
 
   def end {

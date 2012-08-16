@@ -114,13 +114,13 @@ class DatabaseSpec extends Spec {
         db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
 
-      @Test def `nesting not allowed` = {
-        evaluating {
+      @Test def `allows nesting` = {
+        db.transactionScope {
+          val transaction = db.currentTransaction
           db.transactionScope {
-            db.transactionScope {
-            }
+            db.currentTransaction.must(be(transaction))
           }
-        }.must(throwAn[Exception])
+        }
       }
 
       @Test def `explict transaction joins scope` = {
