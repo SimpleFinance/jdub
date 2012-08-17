@@ -121,6 +121,10 @@ class DatabaseSpec extends Spec {
             db.currentTransaction.must(be(transaction))
           }
         }
+
+        evaluating {
+          db.currentTransaction
+        }.must(throwAn[Exception])
       }
 
       @Test def `explict transaction joins scope` = {

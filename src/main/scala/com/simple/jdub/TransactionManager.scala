@@ -6,16 +6,23 @@
 package com.simple.jdub
 
 class TransactionManager {
-  private val localTransactionStorage = new ThreadLocal[Option[Transaction]] { 
+  case class TransactionState(transaction: Transaction, nestCount: Int)
+
+  private val localTransactionStorage = new ThreadLocal[Option[TransactionState]] { 
     override def initialValue = None 
   }
 
-  protected def ambientTransaction = {
+  protected def ambientTransactionState = {
     localTransactionStorage.get
   }
 
-  def transactionExists = {
-    ambientTransaction.isEmpty == false
+  protected def ambientTransaction = {
+    ambientTransactionState.flatMap(t => Some(t.transaction))
+  }
+
+  protected def currentTransactionState = {
+    ambientTransactionState
+      .getOrElse(throw new Exception("No transaction in current context"))
   }
 
   def currentTransaction = {
@@ -23,14 +30,30 @@ class TransactionManager {
       .getOrElse(throw new Exception("No transaction in current context"))
   }
 
+  def transactionExists = {
+    ambientTransactionState.isEmpty == false
+  }
+
   def begin(transaction: Transaction) {
     if (!transactionExists) {
-      localTransactionStorage.set(Some(transaction))
+      localTransactionStorage.set(Some(new TransactionState(transaction, 0)))
+    } else {
+      val state = currentTransactionState.copy(nestCount = currentTransactionState.nestCount + 1)
+      localTransactionStorage.set(Some(state))
     }
   }
 
   def end {
-    localTransactionStorage.set(None)
+    if (!transactionExists) {
+      throw new Exception("No transaction in current context")
+    } else {
+      if (currentTransactionState.nestCount == 0) {
+        localTransactionStorage.set(None)
+      } else {
+        val state = currentTransactionState.copy(nestCount = currentTransactionState.nestCount - 1)
+        localTransactionStorage.set(Some(state))
+      }
+    }
   }
 
   def rollback = {
