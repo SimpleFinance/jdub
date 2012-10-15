@@ -34,6 +34,14 @@ class DatabaseSpec extends Spec {
     }
 
     class `transaction` {
+      @Test def `None is okay` = {
+        db.transaction { txn =>
+          txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", None, 5)))
+        }
+
+        db(AgesQuery()).must(be(Set(29, 30, 402, 5)))
+      }
+
       @Test def `commits by default` = {
         db.transaction { txn =>
           txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
@@ -73,7 +81,7 @@ case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
   val sql = "SELECT age FROM people"
 
   val values = Nil
-  
+
   def flatMap(row: Row) = row.int(0)
 }
 
