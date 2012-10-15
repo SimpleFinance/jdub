@@ -11,7 +11,7 @@ object Utils {
   private[jdub] def prepare(stmt: PreparedStatement, values: Seq[Any], index: Int = 1) {
     if (!values.isEmpty) {
       val v = values.head
-      if (v == null || v == None) {
+      if (v == null || v.isInstanceOf[None$]) {
         stmt.setNull(index, Types.NULL)
       } else {
         stmt.setObject(index, v.asInstanceOf[AnyRef])
