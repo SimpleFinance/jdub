@@ -1,7 +1,7 @@
 package com.codahale.jdub.tests
 
 import java.util.concurrent.atomic.AtomicInteger
-import com.codahale.simplespec.Spec
+import com.simple.simplespec.Spec
 import org.junit.Test
 import com.codahale.jdub._
 

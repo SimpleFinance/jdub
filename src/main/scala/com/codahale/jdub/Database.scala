@@ -1,11 +1,11 @@
 package com.codahale.jdub
 
-import javax.sql.DataSource
 import com.yammer.metrics.scala.Instrumented
-import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
-import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
-import com.codahale.logula.Logging
+import grizzled.slf4j.Logging
 import java.util.Properties
+import javax.sql.DataSource
+import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
+import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 
 object Database {
   /**
@@ -76,14 +76,14 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
     connection.setAutoCommit(false)
     val txn = new Transaction(connection)
     try {
-      log.debug("Starting transaction")
+      debug("Starting transaction")
       val result = f(txn)
-      log.debug("Committing transaction")
+      debug("Committing transaction")
       connection.commit()
       result
     } catch {
       case e => {
-        log.error(e, "Exception thrown in transaction scope; aborting transaction")
+        error("Exception thrown in transaction scope; aborting transaction", e)
         connection.rollback()
         throw e
       }
@@ -104,8 +104,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
     val connection = poolWait.time { source.getConnection }
     query.timer.time {
       try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
+        if (isDebugEnabled) {
+          debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
         }
         val stmt = connection.prepareStatement(prependComment(query, query.sql))
         try {
@@ -137,8 +137,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
     val connection = poolWait.time { source.getConnection }
     statement.timer.time {
       try {
-        if (log.isDebugEnabled) {
-          log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
+        if (isDebugEnabled) {
+          debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
         }
         val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
         try {

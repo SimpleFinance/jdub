@@ -1,7 +1,8 @@
 package com.codahale.jdub
 
+import grizzled.slf4j.Logging
 import java.sql.Connection
-import com.codahale.logula.Logging
+
 
 
 class Transaction(connection: Connection) extends Logging {
@@ -12,8 +13,8 @@ class Transaction(connection: Connection) extends Logging {
    */
   def apply[A](query: RawQuery[A]): A = {
     query.timer.time {
-      if (log.isDebugEnabled) {
-        log.debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
+      if (isDebugEnabled) {
+        debug("%s with %s", query.sql, query.values.mkString("(", ", ", ")"))
       }
       val stmt = connection.prepareStatement(prependComment(query, query.sql))
       try {
@@ -40,8 +41,8 @@ class Transaction(connection: Connection) extends Logging {
    */
   def execute(statement: Statement) = {
     statement.timer.time {
-      if (log.isDebugEnabled) {
-        log.debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
+      if (isDebugEnabled) {
+        debug("%s with %s", statement.sql, statement.values.mkString("(", ", ", ")"))
       }
       val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
       try {
