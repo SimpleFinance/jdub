@@ -47,9 +47,7 @@
 
     <repositories>
       <repository>
-          <id>public</id>
-          <url>http://nexus.banksimple.com/content/repositories/public</url>
-      </repository>        <repository>
+        <repository>
             <id>scala-tools-releases</id>
             <url>http://scala-tools.org/repo-releases/</url>
         </repository>
