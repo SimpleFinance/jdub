@@ -17,7 +17,7 @@ object Database {
               username: String,
               password: String,
               name: String = null,
-              maxWaitForConnectionInMS: Long = 8,
+              maxWaitForConnectionInMS: Long = 1000,
               maxSize: Int = 8,
               minSize: Int = 0,
               checkConnectionWhileIdle: Boolean = true,
