@@ -92,4 +92,4 @@ License
 Copyright (c) 2011-2012 Coda Hale
 Copyright (c) 2012-2013 Simple Finance Technology Corp. All rights reserved.
 
-Published under The MIT License, see LICENSE
+Published under The MIT License, see LICENSE.md
