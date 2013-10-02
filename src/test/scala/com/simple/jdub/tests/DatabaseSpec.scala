@@ -33,6 +33,11 @@ class DatabaseSpec extends Spec {
       db(AgeQuery("Captain Fuzzypants McFrankface")).must(be(None))
     }
 
+    @Test def `converts None to null correctly`() {
+      db(AgeNullQuery(None)).must(be(None))
+      db(AgeNullQuery(null)).must(be(None))
+    }
+
     class `transaction` {
       @Test def `commits by default` = {
         db.transaction { txn =>
@@ -180,6 +185,15 @@ case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
 
   def flatMap(row: Row) = row.int(0)
 }
+
+case class AgeNullQuery(name: Option[String]) extends FlatSingleRowQuery[Int] {
+  val sql = trim("SELECT age FROM people WHERE name = ?")
+
+  val values = name :: Nil
+
+  def flatMap(row: Row) = row.int(0)
+}
+
 
 case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
   val sql = trim("SELECT email FROM people")
