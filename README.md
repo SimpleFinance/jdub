@@ -8,10 +8,7 @@ Requirements
 ------------
 
 * Java SE 6
-* Scala 2.9.1
-* Metrics 2.0.0-RC0
-* Logula 2.1.3
-* Tomcat DBCP (not the app server)
+* Scala 2.9.2
 
 How To Use
 ----------
@@ -28,9 +25,9 @@ How To Use
 
 <dependencies>
   <dependency>
-    <groupId>com.codahale</groupId>
+    <groupId>com.simple</groupId>
     <artifactId>jdub_${scala.version}</artifactId>
-    <version>0.0.7</version>
+    <version>0.1.0</version>
   </dependency>
 </dependencies>
 ```
@@ -93,5 +90,6 @@ License
 -------
 
 Copyright (c) 2011-2012 Coda Hale
+Copyright (c) 2012-2013 Simple Finance Technology Corp. All rights reserved.
 
 Published under The MIT License, see LICENSE
