@@ -71,7 +71,20 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
    */
-  def transaction[A](f: Transaction => A): A = {
+  def transaction[A](f: Transaction => A): A = transaction(true, f)
+
+  /**
+   * Opens a transaction which is committed after `f` is called. If `f` throws
+   * an exception, the transaction is rolled back, but the exception is not
+   * logged (since it is rethrown).
+   */
+  def quietTransaction[A](f: Transaction => A): A = transaction(false, f)
+
+  /**
+   * Opens a transaction which is committed after `f` is called. If `f` throws
+   * an exception, the transaction is rolled back.
+   */
+  def transaction[A](logError: Boolean, f: Transaction => A): A = {
     if (transactionManager.transactionExists) {
       f(transactionManager.currentTransaction)
     } else {
@@ -86,7 +99,9 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
         result
       } catch {
         case e => {
-          error("Exception thrown in transaction scope; aborting transaction", e)
+          if (logError) {
+            error("Exception thrown in transaction scope; aborting transaction", e)
+          }
           connection.rollback()
           throw e
         }
