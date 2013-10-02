@@ -79,14 +79,14 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
       connection.setAutoCommit(false)
       val txn = new Transaction(connection)
       try {
-        log.debug("Starting transaction")
+        debug("Starting transaction")
         val result = f(txn)
-        log.debug("Committing transaction")
+        debug("Committing transaction")
         connection.commit()
         result
       } catch {
         case e => {
-          log.error(e, "Exception thrown in transaction scope; aborting transaction")
+          error("Exception thrown in transaction scope; aborting transaction", e)
           connection.rollback()
           throw e
         }
