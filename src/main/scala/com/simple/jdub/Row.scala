@@ -104,12 +104,12 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[BigDecimal].
    */
-  def bigDecimal(index: Int) = extract(rs.getBigDecimal(index + 1))
+  def bigDecimal(index: Int) = extract(rs.getBigDecimal(index + 1)).map { scala.math.BigDecimal(_) }
 
   /**
    * Extract the value with the given name as an Option[BigDecimal].
    */
-  def bigDecimal(name: String) = extract(rs.getBigDecimal(name))
+  def bigDecimal(name: String) = extract(rs.getBigDecimal(name)).map { scala.math.BigDecimal(_) }
 
   /**
    * Extract the value at the given offset as an Option[Array[Byte]].
