@@ -23,7 +23,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[UUID].
    */
-  def uuid(index: Int) = string(index).map { UUID.fromString }
+  def uuid(index: Int) = string(index + 1).map { UUID.fromString }
 
   /**
    * Extract the value with the given name as an Option[UUID].
@@ -155,7 +155,7 @@ class Row(rs: ResultSet) {
    * Extract the value with the given name as an Option[DateTime].
    */
   def datetime(index: Int): Option[DateTime] = {
-    extract(rs.getTimestamp(index)).map { new DateTime(_, DateTimeZone.UTC) }
+    extract(rs.getTimestamp(index + 1)).map { new DateTime(_, DateTimeZone.UTC) }
   }
 
   /**
