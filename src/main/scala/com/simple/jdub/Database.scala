@@ -17,7 +17,7 @@ object Database {
               username: String,
               password: String,
               name: String = null,
-              maxWaitForConnectionInMS: Long = 8,
+              maxWaitForConnectionInMS: Long = 1000,
               maxSize: Int = 8,
               minSize: Int = 0,
               checkConnectionWhileIdle: Boolean = true,
@@ -65,28 +65,43 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
 
   import Utils._
 
-  private val transactionManager = new TransactionManager
+  var transactionProvider: TransactionProvider = new TransactionManager
 
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
    */
-  def transaction[A](f: Transaction => A): A = {
-    if (transactionManager.transactionExists) {
-      f(transactionManager.currentTransaction)
+  def transaction[A](f: Transaction => A): A = transaction(true, f)
+
+  /**
+   * Opens a transaction which is committed after `f` is called. If `f` throws
+   * an exception, the transaction is rolled back, but the exception is not
+   * logged (since it is rethrown).
+   */
+  def quietTransaction[A](f: Transaction => A): A = transaction(false, f)
+
+  /**
+   * Opens a transaction which is committed after `f` is called. If `f` throws
+   * an exception, the transaction is rolled back.
+   */
+  def transaction[A](logError: Boolean, f: Transaction => A): A = {
+    if (transactionProvider.transactionExists) {
+      f(transactionProvider.currentTransaction)
     } else {
       val connection = poolWait.time { source.getConnection }
       connection.setAutoCommit(false)
       val txn = new Transaction(connection)
       try {
-        log.debug("Starting transaction")
+        debug("Starting transaction")
         val result = f(txn)
-        log.debug("Committing transaction")
+        debug("Committing transaction")
         connection.commit()
         result
       } catch {
         case e => {
-          log.error(e, "Exception thrown in transaction scope; aborting transaction")
+          if (logError) {
+            error("Exception thrown in transaction scope; aborting transaction", e)
+          }
           connection.rollback()
           throw e
         }
@@ -103,11 +118,11 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    */
   def transactionScope[A](f: => A): A = {
     transaction { txn =>
-      transactionManager.begin(txn)
+      transactionProvider.begin(txn)
       try {
         f
       } finally {
-        transactionManager.end
+        transactionProvider.end
       }
     }
   }
@@ -116,7 +131,7 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * The transaction currently scoped via transactionScope.
    */
   def currentTransaction = {
-    transactionManager.currentTransaction
+    transactionProvider.currentTransaction
   }
 
   /**
@@ -128,8 +143,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Performs a query and returns the results.
    */
   def apply[A](query: RawQuery[A]): A = {
-    if (transactionManager.transactionExists) {
-      transactionManager.currentTransaction(query)
+    if (transactionProvider.transactionExists) {
+      transactionProvider.currentTransaction(query)
     } else {
       val connection = poolWait.time { source.getConnection }
       try {
@@ -144,8 +159,8 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Executes an update, insert, delete, or DDL statement.
    */
   def execute(statement: Statement) = {
-    if (transactionManager.transactionExists) {
-      transactionManager.currentTransaction.execute(statement)
+    if (transactionProvider.transactionExists) {
+      transactionProvider.currentTransaction.execute(statement)
     } else {
       val connection = poolWait.time { source.getConnection }
       try {
@@ -160,7 +175,7 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
    * Rollback any existing ambient transaction
    */
   def rollback() {
-    transactionManager.rollback
+    transactionProvider.rollback
   }
 
   /**

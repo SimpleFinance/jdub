@@ -1,4 +1,5 @@
-Copyright (c) 2011 Coda Hale
+Copyright (c) 2011-2012 Coda Hale
+Copyright (c) 2012-2013 Simple Finance Technology Corp. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
