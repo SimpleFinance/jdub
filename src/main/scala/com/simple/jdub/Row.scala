@@ -1,6 +1,8 @@
 package com.simple.jdub
 
 import java.sql.ResultSet
+import org.joda.time.{DateTime, DateTimeZone}
+import java.util.UUID
 
 /**
  * A row in a result set.
@@ -17,6 +19,16 @@ class Row(rs: ResultSet) {
    * Extract the value with the given name as an Option[String].
    */
   def string(name: String) = extract(rs.getString(name))
+
+  /**
+   * Extract the value at the given offset as an Option[UUID].
+   */
+  def uuid(index: Int) = string(index).map { UUID.fromString }
+
+  /**
+   * Extract the value with the given name as an Option[UUID].
+   */
+  def uuid(name: String) = string(name).map { UUID.fromString }
 
   /**
    * Extract the value at the given offset as an Option[Boolean].
@@ -138,6 +150,35 @@ class Row(rs: ResultSet) {
    * Extract the value with the given name as an Option[Timestamp].
    */
   def timestamp(name: String) = extract(rs.getTimestamp(name))
+
+  /**
+   * Extract the value with the given name as an Option[DateTime].
+   */
+  def datetimeUtc(index: Int, tz: DateTimeZone): Option[DateTime] = {
+    extract(rs.getTimestamp(index)).map { new DateTime(_, DateTimeZone.UTC) }
+  }
+
+  /**
+   * Extract the value with the given name as an Option[DateTime].
+   */
+  def datetimeUtc(name: String, tz: DateTimeZone): Option[DateTime] = {
+    extract(rs.getTimestamp(name)).map { new DateTime(_, DateTimeZone.UTC) }
+  }
+
+  /**
+   * Extract the value with the given name as an Option[DateTime].
+   */
+  def datetime(index: Int, tz: DateTimeZone): Option[DateTime] = {
+    extract(rs.getTimestamp(index)).map { new DateTime(_, tz) }
+  }
+
+  /**
+   * Extract the value with the given name as an Option[DateTime].
+   */
+  def datetime(name: String, tz: DateTimeZone): Option[DateTime] = {
+    extract(rs.getTimestamp(name)).map { new DateTime(_, tz) }
+  }
+
 
   /**
    * Extract the value at the given offset as an Option[InputStream].
