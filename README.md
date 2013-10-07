@@ -16,13 +16,6 @@ How To Use
 **First**, specify Jdub as a dependency:
 
 ```xml
-<repositories>
-  <repository>
-    <id>repo.codahale.com</id>
-    <url>http://repo.codahale.com</url>
-  </repository>
-</repositories>
-
 <dependencies>
   <dependency>
     <groupId>com.simple</groupId>
