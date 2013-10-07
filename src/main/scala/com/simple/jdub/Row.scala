@@ -154,14 +154,14 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value with the given name as an Option[DateTime].
    */
-  def datetimeUtc(index: Int, tz: DateTimeZone): Option[DateTime] = {
+  def datetimeUtc(index: Int): Option[DateTime] = {
     extract(rs.getTimestamp(index)).map { new DateTime(_, DateTimeZone.UTC) }
   }
 
   /**
    * Extract the value with the given name as an Option[DateTime].
    */
-  def datetimeUtc(name: String, tz: DateTimeZone): Option[DateTime] = {
+  def datetimeUtc(name: String): Option[DateTime] = {
     extract(rs.getTimestamp(name)).map { new DateTime(_, DateTimeZone.UTC) }
   }
 
