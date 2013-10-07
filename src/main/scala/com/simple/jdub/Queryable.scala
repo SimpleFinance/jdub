@@ -18,7 +18,7 @@ trait Queryable extends Logging with Instrumented {
    */
   def apply[A](connection: Connection, query: RawQuery[A]): A = {
     query.timer.time {
-      debug("%s with %s".format(query.sql,
+      logger.debug("%s with %s".format(query.sql,
        query.values.mkString("(", ", ", ")")))
       val stmt = connection.prepareStatement(prependComment(query, query.sql))
       try {
@@ -40,7 +40,7 @@ trait Queryable extends Logging with Instrumented {
    */
   def execute(connection: Connection, statement: Statement): Int = {
     statement.timer.time {
-      debug("%s with %s".format(statement.sql,
+      logger.debug("%s with %s".format(statement.sql,
         statement.values.mkString("(", ", ", ")")))
       val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
       try {
