@@ -6,7 +6,7 @@
 
     <groupId>com.simple</groupId>
     <artifactId>jdub_2.9.2</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <name>Jdub for Scala ${scala.version}</name>
     <url>https://github.com/SimpleFinance/jdub</url>
     <description>Jdub is a Scala wrapper over JDBC.</description>
@@ -81,15 +81,9 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.yammer.metrics</groupId>
-            <artifactId>metrics-scala_2.9.1</artifactId>
+            <groupId>nl.grons</groupId>
+            <artifactId>metrics-scala_2.9.2</artifactId>
             <version>2.2.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.clapper</groupId>
