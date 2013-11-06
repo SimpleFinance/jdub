@@ -11,11 +11,16 @@ object Utils {
   @tailrec
   private[jdub] def prepare(stmt: PreparedStatement, values: Seq[Any], index: Int = 1) {
     if (!values.isEmpty) {
-      val v = values.head
-      if (v == null || v.isInstanceOf[None$]) {
-        stmt.setNull(index, Types.NULL)
-      } else {
-        stmt.setObject(index, convert(v.asInstanceOf[AnyRef]))
+      values.head match {
+        case v if v == null || v.isInstanceOf[None$] =>
+          stmt.setNull(index, Types.NULL)
+
+        case ov: Option[_] if ov.isDefined =>
+          stmt.setObject(index, convert(ov.get.asInstanceOf[AnyRef]))
+
+        case ov: Option[_] if ov.isEmpty => stmt.setNull(index, Types.NULL)
+
+        case v: AnyRef => stmt.setObject(index, convert(v))
       }
       prepare(stmt, values.tail, index + 1)
     }
