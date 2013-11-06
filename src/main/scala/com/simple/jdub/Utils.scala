@@ -20,7 +20,7 @@ object Utils {
 
         case ov: Option[_] if ov.isEmpty => stmt.setNull(index, Types.NULL)
 
-        case v: AnyRef => stmt.setObject(index, convert(v))
+        case v => stmt.setObject(index, convert(v.asInstanceOf[AnyRef]))
       }
       prepare(stmt, values.tail, index + 1)
     }
