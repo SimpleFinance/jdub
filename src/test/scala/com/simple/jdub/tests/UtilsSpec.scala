@@ -2,8 +2,10 @@ package com.simple.jdub.tests
 
 import com.simple.simplespec.Spec
 import org.junit.Test
+import org.junit.Ignore
 import com.simple.jdub._
 import org.joda.time.{LocalDate, DateTime}
+import java.sql
 import scala.math.BigDecimal
 
 class UtilsSpec extends Spec {
@@ -26,6 +28,32 @@ class UtilsSpec extends Spec {
     @Test def `BigInt is converted property`() {
       val converted = Utils.convert(BigInt(120))
       converted.isInstanceOf[java.math.BigDecimal].must(be(true))
+    }
+  }
+
+  class `Prepare tests` {
+    @Test def `Null is set as null` {
+      val s = mock[sql.PreparedStatement]
+      Utils.prepare(s, Seq(null))
+      verify.one(s).setNull(1, sql.Types.NULL)
+    }
+
+    @Test def `None is set as null` {
+      val s = mock[sql.PreparedStatement]
+      Utils.prepare(s, Seq(None))
+      verify.one(s).setNull(1, sql.Types.NULL)
+    }
+
+    @Test def `Non-empty Options are set as their value` {
+      val s = mock[sql.PreparedStatement]
+      Utils.prepare(s, Seq(Some("Ahab")))
+      verify.one(s).setObject(1, "Ahab")
+    }
+
+    @Test def `Empty Options are set as null` {
+      val s = mock[sql.PreparedStatement]
+      Utils.prepare(s, Seq(Option[String](null)))
+      verify.one(s).setNull(1, sql.Types.NULL)
     }
   }
 }
