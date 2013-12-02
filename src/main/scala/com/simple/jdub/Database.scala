@@ -38,28 +38,37 @@ object Database {
     properties.setProperty("password", password)
 
     // Configure SSL for client-side SSL.
-    if (sslSettings.isDefined) {
-      val ssl = sslSettings.get
+    sslSettings match {
+      case Some(ssl) =>
+        val ssl = sslSettings.get
 
-      // Load the client-side cert.
-      val idStoreProvider = ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType)
-      val idStore = KeyStore.getInstance(idStoreProvider)
-      idStore.load(new FileInputStream(ssl.clientCertKeyStorePath),
-        ssl.clientCertKeyStorePassword.map { _.toCharArray }.orNull)
+        // Load the client-side cert.
+        val idStore = KeyStore.getInstance(
+          ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
+        idStore.load(new FileInputStream(ssl.clientCertKeyStorePath),
+          ssl.clientCertKeyStorePassword.map { _.toCharArray }.orNull)
 
-      // Load the CA certs.
-      val trustStoreProvider = ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType)
-      val trustStore = KeyStore.getInstance(trustStoreProvider)
-      trustStore.load(new FileInputStream(ssl.trustKeyStoreProviderPath), null)
+        // Load the CA certs.
+        val trustStore = KeyStore.getInstance(
+          ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
+        trustStore.load(new FileInputStream(ssl.trustKeyStoreProviderPath), null)
 
-      // Set it so that the ssl socket factory knows how to find these parameters
-      val params = SslParams(idStore, ssl.clientCertKeyStorePassword.orNull, trustStore)
-      val arg = UUID.randomUUID().toString
-      SslSocketFactory.configure(arg, params)
+        // Set it so that the ssl socket factory knows how to find these parameters
+        val params = SslParams(idStore, ssl.clientCertKeyStorePassword.orNull, trustStore)
+        val arg = UUID.randomUUID().toString
+        ClientSideCertSslSocketFactoryFactory.configure(arg, params)
 
-      properties.setProperty("ssl", "true")
-      properties.setProperty("sslfactory", "com.simple.jdub.SslSocketFactory")
-      properties.setProperty("sslfactoryarg", arg)
+        // Tell JDBC we are using SSL
+        // http://jdbc.postgresql.org/documentation/80/connect.html
+        properties.setProperty("ssl", "true")
+        // We set these parameters as required by the Postgres JDBC
+        // driver. It expects the SSL factory name and a string argument.
+        // http://jdbc.postgresql.org/documentation/91/ssl-factory.html
+        properties.setProperty("sslfactory", "com.simple.jdub.SslSocketFactory")
+        properties.setProperty("sslfactoryarg", arg)
+
+      case None =>
+        // No SSL settings; just use default.
     }
 
     val factory = new DriverManagerConnectionFactory(url, properties)

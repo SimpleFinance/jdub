@@ -12,7 +12,7 @@ case class SslParams(identityStore: KeyStore, identityStorePassword: String, tru
 /**
  * SslSocketFactory Factory loljava.
  */
-object SslSocketFactory {
+object ClientSideCertSslSocketFactoryFactory {
   val configs = new ConcurrentHashMap[String, SslParams]
 
   /**
@@ -44,8 +44,8 @@ object SslSocketFactory {
 /**
  * Thunk the saved SSL socket factory to the delegate using the saved parameters.
  */
-class SslSocketFactory(param: String) extends SSLSocketFactory {
-  val delegate = SslSocketFactory.factory(param)
+class ClientSideCertSslSocketFactoryFactory(param: String) extends SSLSocketFactory {
+  val delegate = ClientSideCertSslSocketFactoryFactory.factory(param)
 
   def getDefaultCipherSuites: Array[String] = delegate.getDefaultCipherSuites
 
