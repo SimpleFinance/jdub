@@ -62,7 +62,7 @@ object Database {
         // We set these parameters as required by the Postgres JDBC
         // driver. It expects the SSL factory name and a string argument.
         // http://jdbc.postgresql.org/documentation/91/ssl-factory.html
-        properties.setProperty("sslfactory", "com.simple.jdub.SslSocketFactory")
+        properties.setProperty("sslfactory", "com.simple.jdub.ClientSideCertSslSocketFactoryFactory")
         properties.setProperty("sslfactoryarg", arg)
 
       case None =>
