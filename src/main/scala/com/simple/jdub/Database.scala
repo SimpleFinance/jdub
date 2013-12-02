@@ -1,9 +1,11 @@
 package com.simple.jdub
 
+import java.io.FileInputStream
+import java.security.KeyStore
+import java.util.{UUID, Properties}
 import javax.sql.DataSource
-import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
-import java.util.Properties
+import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
 
 object Database {
   /**
@@ -12,6 +14,7 @@ object Database {
    * @param url the JDBC url
    * @param username the database user
    * @param password the database password
+   * @param sslSettings if present, uses the given SSL settings for a client-side SSL cert.
    */
   def connect(url: String,
               username: String,
@@ -24,13 +27,40 @@ object Database {
               checkConnectionHealthWhenIdleForMS: Long = 10000,
               closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
               healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql),
-              jdbcProperties: Map[String, String] = Map.empty) = {
+              jdbcProperties: Map[String, String] = Map.empty,
+              sslSettings: Option[SslSettings] = None): Database = {
+
     val properties = new Properties
     for ((k, v) <- jdbcProperties) {
       properties.setProperty(k, v)
     }
     properties.setProperty("user", username)
     properties.setProperty("password", password)
+
+    // Configure SSL for client-side SSL.
+    if (sslSettings.isDefined) {
+      val ssl = sslSettings.get
+
+      // Load the client-side cert.
+      val idStoreProvider = ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType)
+      val idStore = KeyStore.getInstance(idStoreProvider)
+      idStore.load(new FileInputStream(ssl.clientCertKeyStorePath),
+        ssl.clientCertKeyStorePassword.map { _.toCharArray }.orNull)
+
+      // Load the CA certs.
+      val trustStoreProvider = ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType)
+      val trustStore = KeyStore.getInstance(trustStoreProvider)
+      trustStore.load(new FileInputStream(ssl.trustKeyStoreProviderPath), null)
+
+      // Set it so that the ssl socket factory knows how to find these parameters
+      val params = SslParams(idStore, ssl.clientCertKeyStorePassword.orNull, trustStore)
+      val arg = UUID.randomUUID().toString
+      SslSocketFactory.configure(arg, params)
+
+      properties.setProperty("ssl", "true")
+      properties.setProperty("sslfactory", "com.simple.jdub.SslSocketFactory")
+      properties.setProperty("sslfactoryarg", arg)
+    }
 
     val factory = new DriverManagerConnectionFactory(url, properties)
     val pool = new GenericObjectPool(null)
@@ -48,8 +78,6 @@ object Database {
     )
     new Database(new PoolingDataSource(pool), pool, name)
   }
-
-
 }
 
 /**
@@ -63,7 +91,6 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
   metrics.gauge("total-connections", name)  { pool.getNumIdle + pool.getNumActive }
   private val poolWait = metrics.timer("pool-wait")
 
-  import Utils._
 
   var transactionProvider: TransactionProvider = new TransactionManager
 
