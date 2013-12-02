@@ -125,12 +125,12 @@ class Database protected(source: DataSource, pool: GenericObjectPool, name: Stri
         connection.commit()
         result
       } catch {
-        case e => {
+        case t: Throwable => {
           if (logError) {
-            logger.error("Exception thrown in transaction scope; aborting transaction", e)
+            logger.logger.error("Exception thrown in transaction scope; aborting transaction", t)
           }
           connection.rollback()
-          throw e
+          throw t
         }
       } finally {
         connection.close()
