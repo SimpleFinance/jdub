@@ -40,8 +40,6 @@ object Database {
     // Configure SSL for client-side SSL.
     sslSettings match {
       case Some(ssl) =>
-        val ssl = sslSettings.get
-
         // Load the client-side cert.
         val idStore = KeyStore.getInstance(
           ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
