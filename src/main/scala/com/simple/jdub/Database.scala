@@ -90,7 +90,7 @@ object Database {
 /**
  * A set of pooled connections to a database.
  */
-class Database protected(source: DataSource, pool: GenericObjectPool, name: String)
+class Database protected(val source: DataSource, pool: GenericObjectPool, name: String)
   extends Queryable {
 
   metrics.gauge("active-connections", name) { pool.getNumActive }
