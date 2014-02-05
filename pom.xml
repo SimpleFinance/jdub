@@ -12,7 +12,8 @@
     <description>Jdub is a Scala wrapper over JDBC.</description>
 
     <properties>
-        <scala.version>2.10.1</scala.version>
+      <scala.version>2.10.2</scala.version>
+      <scala.dep.version>2.10</scala.dep.version>
     </properties>
 
     <developers>
@@ -82,7 +83,7 @@
         </dependency>
         <dependency>
             <groupId>nl.grons</groupId>
-            <artifactId>metrics-scala_2.10.0</artifactId>
+            <artifactId>metrics-scala_${scala.dep.version}</artifactId>
             <version>2.2.0</version>
         </dependency>
         <dependency>
