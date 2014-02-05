@@ -12,7 +12,7 @@ object Utils {
   private[jdub] def prepare(stmt: PreparedStatement, values: Seq[Any], index: Int = 1) {
     if (!values.isEmpty) {
       values.head match {
-        case v if v == null || v.isInstanceOf[None$] =>
+        case v if v == null =>
           stmt.setNull(index, Types.NULL)
 
         case ov: Option[_] if ov.isDefined =>
