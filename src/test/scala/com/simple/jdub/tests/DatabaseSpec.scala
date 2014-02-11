@@ -57,6 +57,66 @@ class DatabaseSpec extends Spec {
         db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
 
+      @Test def `fires onCommit and onClose after commit` = {
+        var committed = false
+        var rolledback = false
+        var closed = false
+
+        db.transaction { txn =>
+          txn.onCommit += { () => committed = true }
+          txn.onRollback += { () => rolledback = true }
+          txn.onClose += { () => closed = true }
+
+          txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+        }
+
+        committed.must(be(true))
+        rolledback.must(be(false))
+        closed.must(be(true))
+      }
+
+      @Test def `fires onRollback and onClose if an exception is thrown` = {
+        var committed = false
+        var rolledback = false
+        var closed = false
+
+        evaluating {
+          db.transaction {txn =>
+            txn.onCommit += { () => committed = true }
+            txn.onRollback += { () => rolledback = true }
+            txn.onClose += { () => closed = true }
+
+            txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+
+            throw new IllegalArgumentException("OH NOES")
+          }
+        }.must(throwAn[IllegalArgumentException])
+
+        committed.must(be(false))
+        rolledback.must(be(true))
+        closed.must(be(true))
+      }
+
+      @Test def `fires onRollback and onClose if rollback` = {
+        var committed = false
+        var rolledback = false
+        var closed = false
+
+        db.transaction {txn =>
+          txn.onCommit += { () => committed = true }
+          txn.onRollback += { () => rolledback = true }
+          txn.onClose += { () => closed = true }
+
+          txn.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("New Guy", null, 5)))
+
+          txn.rollback
+        }
+
+        committed.must(be(false))
+        rolledback.must(be(true))
+        closed.must(be(true))
+      }
+
       @Test def `rolls back the transaction if an exception is thrown` = {
         evaluating {
           db.transaction {txn =>
@@ -132,6 +192,16 @@ class DatabaseSpec extends Spec {
         }.must(throwAn[Exception])
       }
 
+      @Test def `explict new transaction creates new scope` = {
+        db.transactionScope {
+          val transaction = db.currentTransaction
+          db.newTransactionScope {
+            db.currentTransaction.must(not(be(transaction)))
+          }
+          db.currentTransaction.must(be(transaction))
+        }
+      }
+
       @Test def `explict transaction joins scope` = {
         db.transactionScope {
           val transaction = db.currentTransaction
@@ -174,7 +244,7 @@ case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
   val sql = "SELECT age FROM people"
 
   val values = Nil
-  
+
   def flatMap(row: Row) = row.int(0)
 }
 
