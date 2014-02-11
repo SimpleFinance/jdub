@@ -5,6 +5,8 @@
 
 package com.simple.jdub
 
+import scala.collection.mutable.Stack
+
 trait TransactionProvider {
   def transactionExists: Boolean
   def currentTransaction: Transaction
@@ -14,10 +16,10 @@ trait TransactionProvider {
 }
 
 class TransactionManager extends TransactionProvider {
-  case class TransactionState(transaction: Transaction, nestCount: Int)
+  case class TransactionState(transactions: Stack[Transaction])
 
-  private val localTransactionStorage = new ThreadLocal[Option[TransactionState]] { 
-    override def initialValue = None 
+  private val localTransactionStorage = new ThreadLocal[Option[TransactionState]] {
+    override def initialValue = None
   }
 
   protected def ambientTransactionState = {
@@ -25,7 +27,7 @@ class TransactionManager extends TransactionProvider {
   }
 
   protected def ambientTransaction = {
-    ambientTransactionState.flatMap(t => Some(t.transaction))
+    ambientTransactionState.flatMap(t => Some(t.transactions.head))
   }
 
   protected def currentTransactionState = {
@@ -44,10 +46,9 @@ class TransactionManager extends TransactionProvider {
 
   def begin(transaction: Transaction) {
     if (!transactionExists) {
-      localTransactionStorage.set(Some(new TransactionState(transaction, 0)))
+      localTransactionStorage.set(Some(new TransactionState(Stack(transaction))))
     } else {
-      val state = currentTransactionState.copy(nestCount = currentTransactionState.nestCount + 1)
-      localTransactionStorage.set(Some(state))
+      currentTransactionState.transactions.push(transaction)
     }
   }
 
@@ -55,11 +56,9 @@ class TransactionManager extends TransactionProvider {
     if (!transactionExists) {
       throw new Exception("No transaction in current context")
     } else {
-      if (currentTransactionState.nestCount == 0) {
+      currentTransactionState.transactions.pop
+      if (currentTransactionState.transactions.isEmpty) {
         localTransactionStorage.set(None)
-      } else {
-        val state = currentTransactionState.copy(nestCount = currentTransactionState.nestCount - 1)
-        localTransactionStorage.set(Some(state))
       }
     }
   }
