@@ -114,12 +114,14 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
    */
   def quietTransaction[A](f: Transaction => A): A = transaction(false, f)
 
+  def transaction[A](logError: Boolean, f: Transaction => A): A = transaction(false, false, f)
+
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
    */
-  def transaction[A](logError: Boolean, f: Transaction => A): A = {
-    if (transactionProvider.transactionExists) {
+  def transaction[A](logError: Boolean, forceNew: Boolean, f: Transaction => A): A = {
+    if (!forceNew && transactionProvider.transactionExists) {
       f(transactionProvider.currentTransaction)
     } else {
       val connection = poolWait.time { source.getConnection }
@@ -128,19 +130,18 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
       try {
         logger.debug("Starting transaction")
         val result = f(txn)
-        logger.debug("Committing transaction")
-        connection.commit()
+        txn.commit()
         result
       } catch {
         case t: Throwable => {
           if (logError) {
             logger.logger.error("Exception thrown in transaction scope; aborting transaction", t)
           }
-          connection.rollback()
+          txn.rollback()
           throw t
         }
       } finally {
-        connection.close()
+        txn.close()
       }
     }
   }
@@ -151,14 +152,32 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
    * is rolled back.
    */
   def transactionScope[A](f: => A): A = {
-    transaction { txn =>
+    transaction(true, false, (txn: Transaction) => {
       transactionProvider.begin(txn)
       try {
         f
       } finally {
         transactionProvider.end
       }
-    }
+    })
+  }
+
+  /**
+   * Opens a new transaction that is implicitly used in all db calls
+   * on the current thread within the scope of `f`. If a
+   * transactionScope already exists in scope when called this method
+   * will create a new separate transactionScope. If `f` throws an
+   * exception the transaction is rolled back.
+   */
+  def newTransactionScope[A](f: => A): A = {
+    transaction(true, true, (txn: Transaction) => {
+      transactionProvider.begin(txn)
+      try {
+        f
+      } finally {
+        transactionProvider.end
+      }
+    })
   }
 
   /**
