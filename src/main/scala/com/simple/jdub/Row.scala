@@ -295,5 +295,16 @@ class Row(rs: ResultSet) {
    */
   def url(name: String) = extract(rs.getURL(name))
 
+  /**
+   * Transform the row into a Map[String, Any].
+   */
+  def toMap(): Map[String, Any] = {
+    val md = rs.getMetaData()
+    val colRange = 1 until (1 + md.getColumnCount)
+    val colNames =  colRange.map(md.getColumnName)
+    val colValues = colRange.map(rs.getObject)
+    colNames.zip(colValues).toMap
+  }
+
   private def extract[A](f: A): Option[A] = if (rs.wasNull()) None else Some(f)
 }
