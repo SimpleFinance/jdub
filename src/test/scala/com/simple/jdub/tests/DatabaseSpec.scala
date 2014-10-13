@@ -38,6 +38,18 @@ class DatabaseSpec extends Spec {
       db(AgeNullQuery(null)).must(be(None))
     }
 
+    @Test def `returns a collection of maps` = {
+      db(MapsQuery()).must(be(Seq(Map("NAME" -> "Coda Hale",
+                                      "EMAIL" -> "chale@yammer-inc.com",
+                                      "AGE" -> 29),
+                                  Map("NAME" -> "Kris Gale",
+                                      "EMAIL" -> "kgale@yammer-inc.com",
+                                      "AGE" -> 30),
+                                  Map("NAME" -> "Old Guy",
+                                      "EMAIL" -> null,
+                                      "AGE" -> 402))))
+    }
+
     class `transaction` {
       @Test def `commits by default` = {
         db.transaction { txn =>
@@ -271,4 +283,12 @@ case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
   val values = Nil
 
   def map(row: Row) = row.string("email")
+}
+
+case class MapsQuery() extends CollectionQuery[Seq, Map[String, Any]] {
+  val sql = trim("SELECT name, email, age FROM people")
+
+  val values = Nil
+
+  def map(row: Row) = row.toMap
 }
