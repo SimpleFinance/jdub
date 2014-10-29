@@ -99,7 +99,7 @@ db.execute(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
 db.update(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
 ```
 
-**Fifth**, read up on all the details in [the Jdub tour](tour.md).
+**Fifth**, read up on all the details in the [Jdub tour](tour.md).
 
 License
 -------
