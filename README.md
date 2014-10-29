@@ -36,7 +36,26 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-case class GetUser(userId: Long) extends Query[Option[User]] {
+case class GetUsers() extends Query[List[User]] {
+  val sql = trim("""
+SELECT id, email, name
+  FROM users
+""")
+
+  val values = Nil
+
+  def reduce(results: Iterator[Row]) = {
+    for (row <- results;
+         id <- row.long("id");
+         email <- row.string("email");
+         name <- row.string("name"))
+      yield User(id, email, name)
+  }.toList
+}
+// users = List(User("id1", "user@example.com", "Example"), ...)
+val users = db(GetUsers())
+
+case class GetUser(userId: Long) extends FlatSingleRowQuery[User] {
   val sql = trim("""
 SELECT id, email, name
   FROM users
@@ -44,18 +63,20 @@ SELECT id, email, name
 """)
 
   val values = userId :: Nil
-  
-  def reduce(results: Iterator[Row]) = {
-    for (row <- results;
-         id <- row.long("id");
-         email <- row.string("email");
-         name <- row.string("name"))
-      yield User(id, email, name)
-  }.toStream.headOption
+
+  def flatMap(row: Row) = {
+    val id = row.long("id").get
+    val email = row.string("email").get
+    val name = row.string("name")).get
+    User(id, email, name)
+  }
 }
 
 // this'll print the user record for user #4002
-println(db(GetUser(4002)))
+db(GetUser(4002)) match {
+  case Some(user) => println(user)
+  case None => println("User 4002 not found!")
+}
 ```
 
 **Fourth**, execute some statements:
@@ -78,6 +99,7 @@ db.execute(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
 db.update(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
 ```
 
+**Fifth**, read up on all the details in [the Jdub tour](tour.md).
 
 License
 -------
