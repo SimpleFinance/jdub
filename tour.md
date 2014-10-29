@@ -46,9 +46,9 @@ sealed class GetIds(table: String, city: String) extends Query[List[Long]] {
 
   val sql = trim("""
     SELECT id
-    FROM %s
+    FROM %s -- table
     WHERE city = ?;
-    """.format(column))
+    """.format(table))
 
   val values = city :: Nil
 
