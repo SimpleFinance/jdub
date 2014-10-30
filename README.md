@@ -37,6 +37,7 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 
 ```scala
 // Query returning a single result.
+// Query returning a single result.
 case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
 
   val sql = trim("""
@@ -48,12 +49,13 @@ case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
   val values = name :: Nil
 
   def flatMap(row: Row) = {
-    row.int(0) // returns Option[Int]
+    // Returns Option[Int]; null values in the database return None.
+    row.int(0) // 0 gets the first column
   }
 
 }
 
-println(db(GetAge("Old Guy")).getOrElse("Name not found!")) // 402
+val age = db(GetAge("Old Guy")).getOrElse(0) // 402
 ```
 
 ```scala
