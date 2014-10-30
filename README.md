@@ -7,7 +7,7 @@ jdub
 Requirements
 ------------
 
-* Java SE 6
+* Java SE 6 or above
 * Scala 2.9.2
 
 How To Use
@@ -70,13 +70,13 @@ case object GetPeople extends CollectionQuery[Seq, Person] {
   def map(row: Row) = {
     val name = row.string("name").get
     val email = row.string("email").getOrElse("")
-    val age = row.int("age").get
+    val age = row.int("age").getOrElse(0)
     Person(name, email, age)
   }
 
 }
 
-println(db(GetPeople).head) // Person(Coda Hale,chale@example.com,29)
+val person = db(GetPeople).head // Person(Coda Hale,chale@example.com,29)
 ```
 
 
@@ -96,8 +96,7 @@ case class UpdateEmail(name: String, newEmail: String) extends Statement {
 db.execute(UpdateEmail("Old Guy", "oldguy@example.com"))
 
 // Or return the number of rows updated.
-val count = db.update(UpdateEmail("Old Guy", "oldguy@example.com"))
-println(count) // 1
+val count = db.update(UpdateEmail("Old Guy", "oldguy@example.com")) // 1
 ```
 
 **Fifth**, read up on all the details in the [Jdub tour](tour.md).
