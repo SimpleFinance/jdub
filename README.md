@@ -36,7 +36,7 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-case class GetUsers() extends Query[List[User]] {
+case class GetUsers() extends Query[Seq[User]] {
   val sql = trim("""
 SELECT id, email, name
   FROM users
@@ -50,9 +50,9 @@ SELECT id, email, name
          email <- row.string("email");
          name <- row.string("name"))
       yield User(id, email, name)
-  }.toList
+  }.toSeq
 }
-// users = List(User("id1", "user@example.com", "Example"), ...)
+// users = Seq(User("id1", "user@example.com", "Example"), ...)
 val users = db(GetUsers())
 
 case class GetUser(userId: Long) extends FlatSingleRowQuery[User] {
@@ -68,15 +68,11 @@ SELECT id, email, name
     val id = row.long("id").get
     val email = row.string("email").get
     val name = row.string("name")).get
-    User(id, email, name)
+    Some(User(id, email, name))
   }
 }
-
 // this'll print the user record for user #4002
-db(GetUser(4002)) match {
-  case Some(user) => println(user)
-  case None => println("User 4002 not found!")
-}
+println(db(GetUser(4002)).getOrElse("User not found"))
 ```
 
 **Fourth**, execute some statements:

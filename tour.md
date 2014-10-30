@@ -3,7 +3,7 @@
 ## Anatomy of a Query
 The basic [`Query` class](src/main/scala/com/simple/jdub/Query.scala) defines an abstract method `reduce` and inherits abstract fields `sql` and `values` from the [`RawQuery` trait](src/main/scala/com/simple/jdub/RawQuery.scala). The concrete classes you create based on `Query`, then, must provide those three pieces.
 
-The `sql` field contains the actual SQL code, with optional input parameters denoted by `?`. That SQL code becomes a Java [`PreparedStatement`](http://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html) under the hood. The contents of `values` are then passed in to that `PreparedStatement`. When you send your class into a database object, the resulting rows are passed to `reduce` where the return value defines your final result.
+The `sql` field contains the actual SQL code, with optional bind parameters denoted by `?`. That SQL code becomes a Java [`PreparedStatement`](http://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html) under the hood. The contents of `values` are then passed in to that `PreparedStatement`. When you send your class into a database object, the resulting rows are passed to `reduce` where the return value defines your final result.
 
 Minimal code to get a list of `id` column values for all rows of a table `users` would be:
 ```scala
@@ -12,7 +12,7 @@ case class GetIds() extends Query[List[Long]] {
   // The trailing slash is optional.
   val sql = "SELECT id FROM users;"
 
-  // If no input parameters are used, Nil defines the empty List.
+  // If no bind parameters are used, Nil defines the empty List.
   val values = Nil
 
   def reduce(results: Iterator[Row]) = {
@@ -35,12 +35,12 @@ val sql = trim("""
     """)
 ```
 
-### Input Parameters and Security
-Input parameters are used to pass values into SQL statements. The values are taken from the `values` field. If the same value is needed multiple times in the query, simply provide it multiple times when setting `values`:
+### Bind Parameters and Security
+bind parameters are used to pass values into SQL statements. The values are taken from the `values` field. If the same value is needed multiple times in the query, simply provide it multiple times when setting `values`:
 
     val values = userId :: userName :: userId :: Nil
 
-Note that input parameters cannot be used to provide table or column names. If you'd like to reuse the same code for multiple tables or multiple columns, consider carefully the security implications. One pattern is to define the base query in a sealed class, then define case classes in the same file for all needed combinations of input parameters. This prevents other code from using that base class:
+Note that bind parameters cannot be used to provide table or column names. If you'd like to reuse the same code for multiple tables or multiple columns, consider carefully the security implications. One pattern is to define the base query in a sealed class, then define case classes in the same file for all needed combinations of bind parameters. This prevents other code from using that base class:
 ```scala
 sealed class GetIds(table: String, city: String) extends Query[List[Long]] {
 
