@@ -36,63 +36,68 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-case class GetUsers() extends Query[Seq[User]] {
+// Query returning a single result.
+case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
+
   val sql = trim("""
-SELECT id, email, name
-  FROM users
-""")
+      SELECT age
+      FROM people
+      WHERE name = ?
+      """)
+
+  val values = name :: Nil
+
+  def flatMap(row: Row) = {
+    row.int(0) // returns Option[Int]
+  }
+
+}
+
+println(db(GetAge("Old Guy")).getOrElse("Name not found!")) // 402
+```
+
+```scala
+// Query returning a Person object for each row.
+case object GetPeople extends CollectionQuery[Seq, Person] {
+
+  val sql = trim("""
+      SELECT name, email, age
+      FROM people
+      """)
 
   val values = Nil
 
-  def reduce(results: Iterator[Row]) = {
-    for (row <- results;
-         id <- row.long("id");
-         email <- row.string("email");
-         name <- row.string("name"))
-      yield User(id, email, name)
-  }.toSeq
-}
-// users = Seq(User("id1", "user@example.com", "Example"), ...)
-val users = db(GetUsers())
-
-case class GetUser(userId: Long) extends FlatSingleRowQuery[User] {
-  val sql = trim("""
-SELECT id, email, name
-  FROM users
- WHERE id = ?
-""")
-
-  val values = userId :: Nil
-
-  def flatMap(row: Row) = {
-    val id = row.long("id").get
-    val email = row.string("email").get
-    val name = row.string("name")).get
-    Some(User(id, email, name))
+  def map(row: Row) = {
+    val name = row.string("name").get
+    val email = row.string("email").getOrElse("")
+    val age = row.int("age").get
+    Person(name, email, age)
   }
+
 }
-// this'll print the user record for user #4002
-println(db(GetUser(4002)).getOrElse("User not found"))
+
+println(db(GetPeople).head) // Person(Coda Hale,chale@example.com,29)
 ```
+
 
 **Fourth**, execute some statements:
 
 ```scala
-case class UpdateUserEmail(userId: Long, oldEmail: String, newEmail: String) extends Statement {
+case class UpdateEmail(name: String, newEmail: String) extends Statement {
   val sql = trim("""
-UPDATE users
-   SET email = ?
- WHERE userId = ? AND email = ?
-""")
-
-  val values = userId :: oldEmail :: newEmail :: Nil
+      UPDATE people
+      SET email = ?
+      WHERE name = ?
+      """)
+  val values = newEmail :: name :: Nil
 }
 
-// execute the statement
-db.execute(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
+// Execute the statement.
+db.execute(UpdateEmail("Old Guy", "oldguy@example.com"))
 
-// or return the number of rows updated
-db.update(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
+// Or return the number of rows updated.
+val count = db.update(UpdateEmail("Old Guy", "oldguy@example.com"))
+println(count) // 1
 ```
 
 **Fifth**, read up on all the details in the [Jdub tour](tour.md).

@@ -7,7 +7,7 @@ The `sql` field contains the actual SQL code, with optional bind parameters deno
 
 Minimal code to get a list of `id` column values for all rows of a table `users` would be:
 ```scala
-case class GetIds() extends Query[List[Long]] {
+case class GetIds() extends Query[Seq[Long]] {
 
   // The trailing slash is optional.
   val sql = "SELECT id FROM users;"
@@ -18,12 +18,11 @@ case class GetIds() extends Query[List[Long]] {
   def reduce(results: Iterator[Row]) = {
     results.map { row =>
       row.long("id").get
-    }.toList
+    }.toSeq
 
 }
 
-// ids = List("3723", "4559", ...)
-val ids = db(GetIds())
+val ids = db(GetIds()) // Seq("3723", "4559", ...)
 ```
 
 ### The `trim` Function
@@ -36,13 +35,13 @@ val sql = trim("""
 ```
 
 ### Bind Parameters and Security
-bind parameters are used to pass values into SQL statements. The values are taken from the `values` field. If the same value is needed multiple times in the query, simply provide it multiple times when setting `values`:
+Bind parameters are used to pass values into SQL statements. The values are taken from the `values` field. If the same value is needed multiple times in the query, simply provide it multiple times when setting `values`:
 
     val values = userId :: userName :: userId :: Nil
 
-Note that bind parameters cannot be used to provide table or column names. If you'd like to reuse the same code for multiple tables or multiple columns, consider carefully the security implications. One pattern is to define the base query in a sealed class, then define case classes in the same file for all needed combinations of bind parameters. This prevents other code from using that base class:
+Note that bind parameters cannot be used to provide table or column names. If you'd like to reuse the same code for multiple tables or multiple columns, consider carefully the security implications. One pattern is to define the base query in a sealed class, then define case classes or case objects in the same file for all needed combinations of bind parameters. This prevents other code from using that base class:
 ```scala
-sealed class GetIds(table: String, city: String) extends Query[List[Long]] {
+sealed class GetIds(table: String, city: String) extends Query[Seq[Long]] {
 
   val sql = trim("""
     SELECT id
@@ -55,14 +54,20 @@ sealed class GetIds(table: String, city: String) extends Query[List[Long]] {
   def reduce(results: Iterator[Row]) = {
     results.map { row =>
       row.long("id").get
-    }.toList
+    }.toSeq
 }
-case class GetPortlandUserIds() extends GetIds("user", "Portland")
-case class GetNewYorkAdminIds() extends GetIds("admin", "New York")
+case object GetPortlandUserIds extends GetIds("user", "Portland")
+case class GetAdminIds(city: String) extends GetIds("admin", city)
 ```
 
-## Queries Returning a Single Row
-If you want to count items or make some other query that's expected to return only a single row, you'll want to implement the [`SingleRowQuery` or `FlatSingleRowQuery`](src/main/scala/com/simple/jdub/SingleRowQuery.scala) traits instead of `Query`. These define abstract `map` and `flatMap` methods, respectively, instead of `reduce`. See [README.md](README.md) for an example of `FlatSingleRowQuery` in use.
+## Single Row and Collection Queries
+In most cases, you will want your queries to return either a single row or a collection whose items represent each matching row. Special traits are defined for these cases, meaning you will rarely need to use the base `Query` trait in practice.
+
+For counts and other single result queries, you can implement the [`SingleRowQuery` or `FlatSingleRowQuery`](src/main/scala/com/simple/jdub/SingleRowQuery.scala) traits. Instead of a `reduce` member, `SingleRowQuery` requires that you implement a `map` member which takes in a single row as input. Only the first row matching the query is returned, and an exception will be thrown in the case of no matching rows. The `FlatSingleRowQuery` trait requires that you implement `flatMap`, which wraps your result in `Option` and returns `None` in the case of no matching rows.
+
+To return a collection, implement the [`CollectionQuery` or `FlatCollectionQuery`](src/main/scala/com/simple/jdub/SingleRowQuery.scala) traits. Like the single row queries, these define abstract `map` and `flatMap` methods respectively.
+
+You can see examples of these query types in the [README](README.md) and also in the [database test suite](src/test/scala/com/simple/jdub/tests/DatabaseSpec.scala).
 
 ## **TODO**
-Explanations/examples of [`CollectionQuery`](src/main/scala/com/simple/jdub/CollectionQuery.scala), [`Statement`](src/main/scala/com/simple/jdub/Statement.scala), and [`Transaction`](src/main/scala/com/simple/jdub/Transaction.scala).
+Explanations/examples of [`Statement`](src/main/scala/com/simple/jdub/Statement.scala), and [`Transaction`](src/main/scala/com/simple/jdub/Transaction.scala). See examples in the [database test suite](src/test/scala/com/simple/jdub/tests/DatabaseSpec.scala).
