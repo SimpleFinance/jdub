@@ -37,7 +37,6 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 
 ```scala
 // Query returning a single result.
-// Query returning a single result.
 case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
 
   val sql = trim("""
@@ -109,4 +108,4 @@ License
 Copyright (c) 2011-2012 Coda Hale
 Copyright (c) 2012-2013 Simple Finance Technology Corp. All rights reserved.
 
-Published under The MIT License, see LICENSE.md
+Published under The MIT License, see [LICENSE.md](LICENSE.md)

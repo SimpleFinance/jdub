@@ -7,7 +7,7 @@ The `sql` field contains the actual SQL code, with optional bind parameters deno
 
 Minimal code to get a list of `id` column values for all rows of a table `users` would be:
 ```scala
-case class GetIds() extends Query[Seq[Long]] {
+case object GetIds extends Query[Seq[Long]] {
 
   // The trailing slash is optional.
   val sql = "SELECT id FROM users;"
@@ -22,7 +22,7 @@ case class GetIds() extends Query[Seq[Long]] {
 
 }
 
-val ids = db(GetIds()) // Seq("3723", "4559", ...)
+val ids = db(GetIds) // Seq("3723", "4559", ...)
 ```
 
 ### The `trim` Function
@@ -55,7 +55,9 @@ sealed class GetIds(table: String, city: String) extends Query[Seq[Long]] {
     results.map { row =>
       row.long("id").get
     }.toSeq
+
 }
+
 case object GetPortlandUserIds extends GetIds("user", "Portland")
 case class GetAdminIds(city: String) extends GetIds("admin", city)
 ```
