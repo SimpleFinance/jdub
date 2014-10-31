@@ -1,7 +1,7 @@
 # A Tour of Jdub
 
 ## Anatomy of a Query
-The basic [`Query` class](src/main/scala/com/simple/jdub/Query.scala) defines an abstract method `reduce` and inherits abstract fields `sql` and `values` from the [`RawQuery` trait](src/main/scala/com/simple/jdub/RawQuery.scala). The concrete classes you create based on `Query`, then, must provide those three pieces.
+The basic [`Query` trait](src/main/scala/com/simple/jdub/Query.scala) defines an abstract method `reduce` and inherits abstract fields `sql` and `values` from the [`RawQuery` trait](src/main/scala/com/simple/jdub/RawQuery.scala). The concrete classes you create based on `Query`, then, must provide those three pieces.
 
 The `sql` field contains the actual SQL code, with optional bind parameters denoted by `?`. That SQL code becomes a Java [`PreparedStatement`](http://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html) under the hood. The contents of `values` are then passed in to that `PreparedStatement`. When you send your class into a database object, the resulting rows are passed to `reduce` where the return value defines your final result.
 
