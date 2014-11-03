@@ -255,7 +255,7 @@ class DatabaseSpec extends Spec {
 
       @Test def `example of SingleRowQuery` = {
         //```scala
-        // Query returning a single result.
+        // Query returning an optional single result.
         case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
 
           val sql = trim("""
@@ -264,16 +264,16 @@ class DatabaseSpec extends Spec {
               WHERE name = ?
               """)
 
-          val values = name :: Nil
+          val values = Seq(name)
 
           def flatMap(row: Row) = {
-            // Returns Option[Int]; null values in the database return None.
+            // Returns Option[Int]
             row.int(0) // 0 gets the first column
           }
 
         }
 
-        val age = db(GetAge("Old Guy")).getOrElse(0) // 402
+        val age = db(GetAge("Old Guy")).getOrElse(-1) // 402
         //```
         db(GetAge("Old Guy")).must(be(Some(402)))
       }
@@ -288,7 +288,7 @@ class DatabaseSpec extends Spec {
               FROM people
               """)
 
-          val values = Nil
+          val values = Seq()
 
           def map(row: Row) = {
             val name = row.string("name").get
@@ -312,7 +312,7 @@ class DatabaseSpec extends Spec {
               SET email = ?
               WHERE name = ?
               """)
-          val values = newEmail :: name :: Nil
+          val values = Seq(newEmail, name)
         }
 
         // Execute the statement.
@@ -331,12 +331,12 @@ class DatabaseSpec extends Spec {
 
 case class Person(name: String, email: String, age: Int)
 
-case class SQL(sql: String, values: Seq[Any] = Nil) extends Statement
+case class SQL(sql: String, values: Seq[Any] = Seq()) extends Statement
 
 case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
   val sql = "SELECT age FROM people"
 
-  val values = Nil
+  val values = Seq()
 
   def flatMap(row: Row) = row.int(0)
 }
@@ -344,7 +344,7 @@ case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
 case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
   val sql = trim("SELECT age FROM people WHERE name = ?")
 
-  val values = name :: Nil
+  val values = Seq(name)
 
   def flatMap(row: Row) = row.int(0)
 }
@@ -352,7 +352,7 @@ case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
 case class AgeNullQuery(name: Option[String]) extends FlatSingleRowQuery[Int] {
   val sql = trim("SELECT age FROM people WHERE name = ?")
 
-  val values = name :: Nil
+  val values = Seq(name)
 
   def flatMap(row: Row) = row.int(0)
 }
@@ -361,7 +361,7 @@ case class AgeNullQuery(name: Option[String]) extends FlatSingleRowQuery[Int] {
 case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
   val sql = trim("SELECT email FROM people")
 
-  val values = Nil
+  val values = Seq()
 
   def map(row: Row) = row.string("email")
 }
@@ -369,7 +369,7 @@ case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
 case class MapsQuery() extends CollectionQuery[Seq, Map[String, Any]] {
   val sql = trim("SELECT name, email, age FROM people")
 
-  val values = Nil
+  val values = Seq()
 
   def map(row: Row) = row.toMap
 }

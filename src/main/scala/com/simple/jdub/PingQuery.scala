@@ -7,7 +7,7 @@ package com.simple.jdub
 object PingQuery extends Query[Boolean] {
   val sql = "SELECT 1"
 
-  val values = Nil
+  val values = Seq()
 
   def reduce(rows: Iterator[Row]) = rows.exists { _.int(0) == Some(1) }
 }

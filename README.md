@@ -36,7 +36,7 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-// Query returning a single result.
+// Query returning an optional single result.
 case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
 
   val sql = trim("""
@@ -45,16 +45,16 @@ case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
       WHERE name = ?
       """)
 
-  val values = name :: Nil
+  val values = Seq(name)
 
   def flatMap(row: Row) = {
-    // Returns Option[Int]; null values in the database return None.
+    // Returns Option[Int]
     row.int(0) // 0 gets the first column
   }
 
 }
 
-val age = db(GetAge("Old Guy")).getOrElse(0) // 402
+val age = db(GetAge("Old Guy")).getOrElse(-1) // 402
 ```
 
 ```scala
@@ -66,7 +66,7 @@ case object GetPeople extends CollectionQuery[Seq, Person] {
       FROM people
       """)
 
-  val values = Nil
+  val values = Seq()
 
   def map(row: Row) = {
     val name = row.string("name").get
@@ -90,7 +90,7 @@ case class UpdateEmail(name: String, newEmail: String) extends Statement {
       SET email = ?
       WHERE name = ?
       """)
-  val values = newEmail :: name :: Nil
+  val values = Seq(newEmail, name)
 }
 
 // Execute the statement.
