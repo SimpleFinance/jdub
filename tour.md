@@ -67,7 +67,7 @@ case class GetAdminIds(city: String) extends GetIds("admin", city)
 ```
 
 ## Single Row Queries and Collection Queries
-In most cases, you will want your queries to return either a single row or a collection whose items represent each matching row. Special traits are defined for these cases, meaning you will rarely need to use the base `Query` trait in practice.
+In practice, you will rarely use `Query`, as `SingleRowQuery` and `CollectionQuery` (and their variants) provide simpler interfaces for most use cases. Implementing `Query` directly should only be necessary when you need to return a map or perform non-trivial processing on the query results.
 
 For counts and other single result queries, you can implement the [`SingleRowQuery` or `FlatSingleRowQuery`](src/main/scala/com/simple/jdub/SingleRowQuery.scala) traits. Instead of a `reduce` member, `SingleRowQuery` requires that you implement a `map` member which takes in a single row as input. Only the first row matching the query is returned, and an exception will be thrown in the case of no matching rows. The `FlatSingleRowQuery` trait requires that you implement `flatMap`, which wraps your result in `Option`, returning `None` in the case of no matching rows.
 
