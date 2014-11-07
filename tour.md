@@ -57,6 +57,7 @@ sealed class GetIds(table: String, city: String) extends Query[Seq[Long]] {
     results.map { row =>
       row.long("id").get
     }.toSeq
+  }
 
 }
 
