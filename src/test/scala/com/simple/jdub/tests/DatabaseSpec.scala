@@ -13,8 +13,8 @@ class DatabaseSpec extends Spec {
     val db = Database.connect("jdbc:hsqldb:mem:DbTest" + i.incrementAndGet(), "sa", "")
     db.execute(SQL("DROP TABLE people IF EXISTS"))
     db.execute(SQL("CREATE TABLE people (name varchar(100) primary key, email varchar(100), age int)"))
-    db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Coda Hale", "chale@yammer-inc.com", 29)))
-    db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Kris Gale", "kgale@yammer-inc.com", 30)))
+    db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Coda Hale", "chale@example.com", 29)))
+    db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Kris Gale", "kgale@example.com", 30)))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Old Guy", null, 402)))
 
     @Test def `returns sets of results` = {
@@ -22,7 +22,7 @@ class DatabaseSpec extends Spec {
     }
 
     @Test def `returns sets of results with null values` = {
-      db(EmailQuery()).must(be(Vector(Some("chale@yammer-inc.com"), Some("kgale@yammer-inc.com"), None)))
+      db(EmailQuery()).must(be(Vector(Some("chale@example.com"), Some("kgale@example.com"), None)))
     }
 
     @Test def `returns single rows` = {
@@ -40,10 +40,10 @@ class DatabaseSpec extends Spec {
 
     @Test def `returns a collection of maps` = {
       db(MapsQuery()).must(be(Seq(Map("NAME" -> "Coda Hale",
-                                      "EMAIL" -> "chale@yammer-inc.com",
+                                      "EMAIL" -> "chale@example.com",
                                       "AGE" -> 29),
                                   Map("NAME" -> "Kris Gale",
-                                      "EMAIL" -> "kgale@yammer-inc.com",
+                                      "EMAIL" -> "kgale@example.com",
                                       "AGE" -> 30),
                                   Map("NAME" -> "Old Guy",
                                       "EMAIL" -> null,
@@ -247,15 +247,96 @@ class DatabaseSpec extends Spec {
         db(AgesQuery()).must(be(Set(29, 30, 402)))
       }
     }
+
+    class `examples for documentation` {
+
+      // The code examples in README, etc. should be tested here.
+      // Copy and paste the snippets between "```scala" and "```" comments.
+
+      @Test def `example of SingleRowQuery` = {
+        //```scala
+        // Query returning an optional single result.
+        case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
+
+          val sql = trim("""
+              SELECT age
+              FROM people
+              WHERE name = ?
+              """)
+
+          val values = Seq(name)
+
+          def flatMap(row: Row) = {
+            // Returns Option[Int]
+            row.int(0) // 0 gets the first column
+          }
+
+        }
+
+        val age = db(GetAge("Old Guy")).getOrElse(-1) // 402
+        //```
+        db(GetAge("Old Guy")).must(be(Some(402)))
+      }
+
+      @Test def `example of CollectionQuery` = {
+        //```scala
+        // Query returning a Person object for each row.
+        case object GetPeople extends CollectionQuery[Seq, Person] {
+
+          val sql = trim("""
+              SELECT name, email, age
+              FROM people
+              """)
+
+          val values = Seq()
+
+          def map(row: Row) = {
+            val name = row.string("name").get
+            val email = row.string("email").getOrElse("")
+            val age = row.int("age").getOrElse(0)
+            Person(name, email, age)
+          }
+
+        }
+
+        val person = db(GetPeople).head // Person(Coda Hale,chale@example.com,29)
+        //```
+        db(GetPeople).must(contain(Person("Coda Hale", "chale@example.com", 29)))
+      }
+
+      @Test def `example of Statement` = {
+        //```scala
+        case class UpdateEmail(name: String, newEmail: String) extends Statement {
+          val sql = trim("""
+              UPDATE people
+              SET email = ?
+              WHERE name = ?
+              """)
+          val values = Seq(newEmail, name)
+        }
+
+        // Execute the statement.
+        db.execute(UpdateEmail("Old Guy", "oldguy@example.com"))
+
+        // Or return the number of rows updated.
+        val count = db.update(UpdateEmail("Old Guy", "oldguy@example.com")) // 1
+        //```
+        count.must(be(1))
+      }
+
+    }
+
   }
 }
 
-case class SQL(sql: String, values: Seq[Any] = Nil) extends Statement
+case class Person(name: String, email: String, age: Int)
+
+case class SQL(sql: String, values: Seq[Any] = Seq()) extends Statement
 
 case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
   val sql = "SELECT age FROM people"
 
-  val values = Nil
+  val values = Seq()
 
   def flatMap(row: Row) = row.int(0)
 }
@@ -263,7 +344,7 @@ case class AgesQuery() extends FlatCollectionQuery[Set, Int] {
 case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
   val sql = trim("SELECT age FROM people WHERE name = ?")
 
-  val values = name :: Nil
+  val values = Seq(name)
 
   def flatMap(row: Row) = row.int(0)
 }
@@ -271,7 +352,7 @@ case class AgeQuery(name: String) extends FlatSingleRowQuery[Int] {
 case class AgeNullQuery(name: Option[String]) extends FlatSingleRowQuery[Int] {
   val sql = trim("SELECT age FROM people WHERE name = ?")
 
-  val values = name :: Nil
+  val values = Seq(name)
 
   def flatMap(row: Row) = row.int(0)
 }
@@ -280,7 +361,7 @@ case class AgeNullQuery(name: Option[String]) extends FlatSingleRowQuery[Int] {
 case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
   val sql = trim("SELECT email FROM people")
 
-  val values = Nil
+  val values = Seq()
 
   def map(row: Row) = row.string("email")
 }
@@ -288,7 +369,7 @@ case class EmailQuery() extends CollectionQuery[Vector, Option[String]] {
 case class MapsQuery() extends CollectionQuery[Seq, Map[String, Any]] {
   val sql = trim("SELECT name, email, age FROM people")
 
-  val values = Nil
+  val values = Seq()
 
   def map(row: Row) = row.toMap
 }

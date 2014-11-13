@@ -7,7 +7,7 @@ jdub
 Requirements
 ------------
 
-* Java SE 6
+* Java SE 6 or above
 * Scala 2.9.2
 
 How To Use
@@ -36,48 +36,71 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 **Third**, run some queries:
 
 ```scala
-case class GetUser(userId: Long) extends Query[Option[User]] {
-  val sql = trim("""
-SELECT id, email, name
-  FROM users
- WHERE id = ?
-""")
+// Query returning an optional single result.
+case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
 
-  val values = userId :: Nil
-  
-  def reduce(results: Iterator[Row]) = {
-    for (row <- results;
-         id <- row.long("id");
-         email <- row.string("email");
-         name <- row.string("name"))
-      yield User(id, email, name)
-  }.toStream.headOption
+  val sql = trim("""
+      SELECT age
+      FROM people
+      WHERE name = ?
+      """)
+
+  val values = Seq(name)
+
+  def flatMap(row: Row) = {
+    // Returns Option[Int]
+    row.int(0) // 0 gets the first column
+  }
+
 }
 
-// this'll print the user record for user #4002
-println(db(GetUser(4002)))
+val age = db(GetAge("Old Guy")).getOrElse(-1) // 402
 ```
+
+```scala
+// Query returning a Person object for each row.
+case object GetPeople extends CollectionQuery[Seq, Person] {
+
+  val sql = trim("""
+      SELECT name, email, age
+      FROM people
+      """)
+
+  val values = Seq()
+
+  def map(row: Row) = {
+    val name = row.string("name").get
+    val email = row.string("email").getOrElse("")
+    val age = row.int("age").getOrElse(0)
+    Person(name, email, age)
+  }
+
+}
+
+val person = db(GetPeople).head // Person(Coda Hale,chale@example.com,29)
+```
+
 
 **Fourth**, execute some statements:
 
 ```scala
-case class UpdateUserEmail(userId: Long, oldEmail: String, newEmail: String) extends Statement {
+case class UpdateEmail(name: String, newEmail: String) extends Statement {
   val sql = trim("""
-UPDATE users
-   SET email = ?
- WHERE userId = ? AND email = ?
-""")
-
-  val values = userId :: oldEmail :: newEmail :: Nil
+      UPDATE people
+      SET email = ?
+      WHERE name = ?
+      """)
+  val values = Seq(newEmail, name)
 }
 
-// execute the statement
-db.execute(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
+// Execute the statement.
+db.execute(UpdateEmail("Old Guy", "oldguy@example.com"))
 
-// or return the number of rows updated
-db.update(UpdateUserEmail(4002, "old@example.com", "new@example.com"))
+// Or return the number of rows updated.
+val count = db.update(UpdateEmail("Old Guy", "oldguy@example.com")) // 1
 ```
 
+**Fifth**, read up on all the details in the [Jdub tour](tour.md).
 
 License
 -------
@@ -85,4 +108,4 @@ License
 Copyright (c) 2011-2012 Coda Hale
 Copyright (c) 2012-2013 Simple Finance Technology Corp. All rights reserved.
 
-Published under The MIT License, see LICENSE.md
+Published under The MIT License, see [LICENSE.md](LICENSE.md)
