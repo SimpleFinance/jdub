@@ -8,7 +8,7 @@ Requirements
 ------------
 
 * Java SE 6 or above
-* Scala 2.9.2
+* Scala 2.11.x
 
 How To Use
 ----------
@@ -19,8 +19,8 @@ How To Use
 <dependencies>
   <dependency>
     <groupId>com.simple</groupId>
-    <artifactId>jdub_${scala.version}</artifactId>
-    <version>0.1.0</version>
+    <artifactId>jdub_${scala.major.version}</artifactId>
+    <version>0.9.0</version>
   </dependency>
 </dependencies>
 ```
