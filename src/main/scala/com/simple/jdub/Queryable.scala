@@ -1,5 +1,5 @@
 /**
- * © 2012 Simple Finance Technology Corp. All rights reserved.
+ * © 2012, 2014 Simple Finance Technology Corp. All rights reserved.
  * Author: Ian Eure <ieure@simple.com>
  */
 
@@ -7,7 +7,6 @@ package com.simple.jdub
 
 import java.sql.Connection
 
-import com.yammer.metrics.scala.Instrumented
 import grizzled.slf4j.Logging
 
 trait Queryable extends Logging with Instrumented {

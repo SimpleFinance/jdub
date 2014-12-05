@@ -1,8 +1,6 @@
 package com.simple.jdub
 
-import com.yammer.metrics.scala.Instrumented
-
-trait Statement extends SqlBase with Instrumented {
+trait Statement extends SqlBase {
   private[jdub] val timer = metrics.timer("execute")
 
   def sql: String

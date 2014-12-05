@@ -1,9 +1,8 @@
 package com.simple.jdub
 
-import com.yammer.metrics.scala.Instrumented
 import java.sql.ResultSet
 
-trait RawQuery[A] extends SqlBase with Instrumented {
+trait RawQuery[A] extends SqlBase {
   private[jdub] val timer = metrics.timer("query")
 
   def sql: String

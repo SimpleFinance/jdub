@@ -1,13 +1,22 @@
 package com.simple.jdub
 
+import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
+import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
+
 import java.io.FileInputStream
 import java.security.KeyStore
 import java.util.{UUID, Properties}
 import javax.sql.DataSource
-import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
-import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
+
+import com.codahale.metrics.SharedMetricRegistries
+import nl.grons.metrics.scala.InstrumentedBuilder
+
+trait Instrumented extends InstrumentedBuilder {
+  final val metricRegistry = SharedMetricRegistries.getOrCreate("default")
+}
 
 object Database {
+
   /**
    * Create a pool of connections to the given database.
    *
@@ -19,7 +28,7 @@ object Database {
   def connect(url: String,
               username: String,
               password: String,
-              name: String = null,
+              name: Option[String] = None,
               maxWaitForConnectionInMS: Long = 1000,
               maxSize: Int = 8,
               minSize: Int = 0,
@@ -83,7 +92,8 @@ object Database {
     new PoolableConnectionFactory(
       factory, pool, null, healthCheckQuery, false, true
     )
-    new Database(new PoolingDataSource(pool), pool, name)
+    new Database(new PoolingDataSource(pool), pool, 
+                 name.getOrElse(url.replaceAll("[^A-Za-z0-9]", "")))
   }
 }
 
@@ -91,7 +101,7 @@ object Database {
  * A set of pooled connections to a database.
  */
 class Database protected(val source: DataSource, pool: GenericObjectPool, name: String)
-  extends Queryable {
+    extends Queryable {
 
   metrics.gauge("active-connections", name) { pool.getNumActive }
   metrics.gauge("idle-connections", name)   { pool.getNumIdle }

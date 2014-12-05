@@ -5,12 +5,17 @@ import com.simple.simplespec.Spec
 import org.junit.Test
 import com.simple.jdub._
 
-class DatabaseSpec extends Spec {
-  Class.forName("org.hsqldb.jdbcDriver")
+object Global {
   val i = new AtomicInteger
+  val db = Database.connect("jdbc:hsqldb:mem:DbTest" + Global.i.incrementAndGet(), "sa", "")
+}
+
+class DatabaseSpec extends Spec {
+
+  Class.forName("org.hsqldb.jdbcDriver")
+  val db = Global.db
 
   class `A database` {
-    val db = Database.connect("jdbc:hsqldb:mem:DbTest" + i.incrementAndGet(), "sa", "")
     db.execute(SQL("DROP TABLE people IF EXISTS"))
     db.execute(SQL("CREATE TABLE people (name varchar(100) primary key, email varchar(100), age int)"))
     db.execute(SQL("INSERT INTO people VALUES (?, ?, ?)", Seq("Coda Hale", "chale@example.com", 29)))
