@@ -103,7 +103,7 @@
         </dependency>
         <dependency>
             <groupId>com.simple</groupId>
-            <artifactId>simplespec_${scala.version}</artifactId>
+            <artifactId>simplespec_${scala.major.version}</artifactId>
             <version>0.8.4</version>
             <scope>test</scope>
         </dependency>
