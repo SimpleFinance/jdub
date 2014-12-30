@@ -75,5 +75,138 @@ To return a collection, implement the [`CollectionQuery` or `FlatCollectionQuery
 
 You can see examples of these query types in the [README](README.md) and also in the [database test suite](src/test/scala/com/simple/jdub/tests/DatabaseSpec.scala).
 
+## Transactions and Transaction Lifecycle callbacks
+[`Transactions`](src/main/scala/com/simple/jdub/Transaction.scala) are an integral part of successfully managing complex database code and Jdub makes using them fairly simple. By default, Jdub doesn't wrap your db calls in a transaction, so to start a transaction, you need to create or append to the transaction scope:
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    // code you want to execute in a transaction
+  }
+}
+```
+
+You can nest transaction scopes as well, where all inner transactions scopes will not commit until the outermost transaction scope commits:
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    db.transactionScope {
+      db.transactionScope {
+        // will not commit until outermost transaction commits
+      }
+    }
+  }
+}
+```
+
+Sometimes you need to explicitly force a new transaction to commit even when it is nested inside of another transaction scope. To do this use the `newTransactionScope` call. This will force the calls in the transaction scope to be committed at the end of the transaction scope:
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    db.transactionScope {
+      db.newTransactionScope {
+        // will commit at the end of this scope
+        // not added to existing transaction scope(s)
+      }
+    }
+  }
+}
+```
+### Rolling back a transaction
+To rollback a transaction, simply call the `rollback` method on the current transaction:
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    db.currentTransaction.rollback()
+  }
+}
+```
+
+This is especially helpful when you are dealing with complex error handling logic or doing 'dry runs' of your database logic.
+
+### Lifecycle calls
+Jdub provides a few lifecycle callbacks that you can hook into for different parts of the transaction lifecycle.
+* onCommit - called after the transaction successfully commits
+* onRollback - called after the transaction has been rolled back
+* onClose - called after the transaction has been closed (will always be called and will always be called after onCommit or onRollback)
+
+Jdub allows you to set any number of callbacks for each lifecycle. The callbacks are stored as mutable lists and can simply be appended to:
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    db.currentTransaction.onCommit += { () =>
+      // code you want to execute on commit
+    }
+
+    db.currentTransaction.onRollback += { () =>
+      // code you want to execute on rollback
+    }
+
+    db.currentTransaction.onClose += { () =>
+      // code you want to execute on close
+    }
+  }
+}
+```
+
+Code flow with lifecycle calls (successful commit):
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    db.execute(/* statement A */)
+
+    db.currentTransaction.onCommit += { () =>
+      // code you want to execute on commit
+    }
+
+    db.execute(/* statement B */)
+
+    db.currentTransaction.onClose += { () =>
+      // code you want to execute on close
+    }
+
+    db.execute(/* statement C */)
+  }
+}
+```
+* Transaction scope is started
+* Statement A is executed
+* onCommit handler added (but not executed)
+* Statement B is executed
+* onClose handler added (but not executed)
+* Statement C is executed
+* Transaction scope ended
+* onCommit handler is executed
+* onClose handler is executed
+
+Code flow with lifecycle calls (with rollback):
+```scala
+def doWork(db: Database) {
+  db.transactionScope {
+    db.execute(/* statement A */)
+
+    db.currentTransaction.onRollback += { () =>
+      // code you want to execute on rollback
+    }
+
+    db.execute(/* statement B */)
+
+    db.currentTransaction.onClose += { () =>
+      // code you want to execute on close
+    }
+
+    db.currentTransaction.rollback()
+  }
+}
+```
+* Transaction scope is started
+* Statement A is executed
+* onRollback handler added (but not executed)
+* Statement B is executed
+* onClose handler added (but not executed)
+* Transaction is rolled back
+* onRollback handler is executed
+* onClose handler is executed
+
+
 ## **TODO**
-Explanations/examples of [`Statement`](src/main/scala/com/simple/jdub/Statement.scala), and [`Transaction`](src/main/scala/com/simple/jdub/Transaction.scala). See examples in the [database test suite](src/test/scala/com/simple/jdub/tests/DatabaseSpec.scala).
+Explanations/examples of [`Statement`](src/main/scala/com/simple/jdub/Statement.scala). See examples in the [database test suite](src/test/scala/com/simple/jdub/tests/DatabaseSpec.scala).
