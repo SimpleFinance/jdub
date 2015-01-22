@@ -40,7 +40,7 @@ val db = Database.connect("jdbc:postgresql://localhost/wait_what", "myaccount", 
 case class GetAge(name: String) extends FlatSingleRowQuery[Int] {
 
   val sql = trim("""
-      SELECT age
+      SELECT age /* Use C-style comments in trimmed queries */
       FROM people
       WHERE name = ?
       """)
