@@ -34,6 +34,8 @@ val sql = trim("""
     """)
 ```
 
+Note that `trim` will break any query using SQL-standard comments (`-- comment`). Use C-style comments instead (`/* comment */`).
+
 ### Bind Parameters and Security
 Bind parameters are used to pass values into SQL statements. The values are taken from the `values` field. If the same value is needed multiple times in the query, simply provide it multiple times when setting `values`:
 
