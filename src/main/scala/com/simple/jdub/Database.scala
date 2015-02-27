@@ -1,7 +1,6 @@
 package com.simple.jdub
 
-import org.apache.tomcat.dbcp.dbcp.{PoolingDataSource, PoolableConnectionFactory, DriverManagerConnectionFactory}
-import org.apache.tomcat.dbcp.pool.impl.GenericObjectPool
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
 import java.io.FileInputStream
 import java.security.KeyStore
@@ -29,85 +28,64 @@ object Database {
               username: String,
               password: String,
               name: Option[String] = None,
-              maxWaitForConnectionInMS: Long = 1000,
+              maxWait: Long = 1000,
               maxSize: Int = 8,
-              minSize: Int = 0,
-              checkConnectionWhileIdle: Boolean = true,
-              checkConnectionHealthWhenIdleForMS: Long = 10000,
-              closeConnectionIfIdleForMS: Long = 1000L * 60L * 30L,
-              healthCheckQuery: String = Utils.prependComment(PingQuery, PingQuery.sql),
               jdbcProperties: Map[String, String] = Map.empty,
               sslSettings: Option[SslSettings] = None): Database = {
 
     val properties = new Properties
-    for ((k, v) <- jdbcProperties) {
+
+    for { (k, v) <- jdbcProperties } {
       properties.setProperty(k, v)
     }
-    properties.setProperty("user", username)
-    properties.setProperty("password", password)
 
-    // Configure SSL for client-side SSL.
-    sslSettings match {
-      case Some(ssl) =>
-        // Load the client-side cert.
-        val idStore = KeyStore.getInstance(
-          ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
-        idStore.load(new FileInputStream(ssl.clientCertKeyStorePath),
-          ssl.clientCertKeyStorePassword.map { _.toCharArray }.orNull)
-
-        // Load the CA certs.
-        val trustStore = KeyStore.getInstance(
-          ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
-        trustStore.load(new FileInputStream(ssl.trustKeyStoreProviderPath), null)
-
-        // Set it so that the ssl socket factory knows how to find these parameters
-        val params = SslParams(idStore, ssl.clientCertKeyStorePassword.orNull, trustStore)
-        val arg = UUID.randomUUID().toString
-        ClientSideCertSslSocketFactoryFactory.configure(arg, params)
-
-        // Tell JDBC we are using SSL
-        // http://jdbc.postgresql.org/documentation/80/connect.html
-        properties.setProperty("ssl", "true")
-        // We set these parameters as required by the Postgres JDBC
-        // driver. It expects the SSL factory name and a string argument.
-        // http://jdbc.postgresql.org/documentation/91/ssl-factory.html
-        properties.setProperty("sslfactory", "com.simple.jdub.ClientSideCertSslSocketFactoryFactory")
-        properties.setProperty("sslfactoryarg", arg)
-
-      case None =>
-        // No SSL settings; just use default.
+    for { settings <- sslSettings
+          (k, v) <- initSsl(settings) } {
+      properties.setProperty(k, v)
     }
 
-    val factory = new DriverManagerConnectionFactory(url, properties)
-    val pool = new GenericObjectPool(null)
-    pool.setMaxWait(maxWaitForConnectionInMS)
-    pool.setMaxIdle(maxSize)
-    pool.setMaxActive(maxSize)
-    pool.setMinIdle(minSize)
-    pool.setTestWhileIdle(checkConnectionWhileIdle)
-    pool.setTimeBetweenEvictionRunsMillis(checkConnectionHealthWhenIdleForMS)
-    pool.setMinEvictableIdleTimeMillis(closeConnectionIfIdleForMS)
+    val poolConfig = new HikariConfig(properties) {
+      setPoolName(name.getOrElse(url.replaceAll("[^A-Za-z0-9]", "")))
+      setJdbcUrl(url)
+      setUsername(username)
+      setPassword(password)
+      setConnectionTimeout(maxWait)
+      setMaximumPoolSize(maxSize)
+      setMetricRegistry(SharedMetricRegistries.getOrCreate("default"))
+    }
 
-    // this constructor sets itself as the factory of the pool
-    new PoolableConnectionFactory(
-      factory, pool, null, healthCheckQuery, false, true
-    )
-    new Database(new PoolingDataSource(pool), pool, 
-                 name.getOrElse(url.replaceAll("[^A-Za-z0-9]", "")))
+    val poolDataSource  = new HikariDataSource(poolConfig)
+
+    new Database(poolDataSource)
+  }
+
+  protected def initSsl(ssl: SslSettings): Map[String, String] = {
+    // Load the client-side cert.
+    val idStore = KeyStore.getInstance(ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
+    idStore.load(new FileInputStream(ssl.clientCertKeyStorePath),
+                 ssl.clientCertKeyStorePassword.map { _.toCharArray }.orNull)
+
+    // Load the CA certs.
+    val trustStore = KeyStore.getInstance(ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
+    trustStore.load(new FileInputStream(ssl.trustKeyStoreProviderPath), null)
+
+    // Set it so that the ssl socket factory knows how to find these parameters
+    val params = SslParams(idStore, ssl.clientCertKeyStorePassword.orNull, trustStore)
+    val identifier = UUID.randomUUID().toString
+
+    ClientSideCertSslSocketFactoryFactory.configure(identifier, params)
+
+    Map("ssl" -> "true",
+        "sslfactory" -> "com.simple.jdub.ClientSideCertSslSocketFactoryFactory",
+        "sslfactoryarg" -> identifier)
   }
 }
 
 /**
  * A set of pooled connections to a database.
  */
-class Database protected(val source: DataSource, pool: GenericObjectPool, name: String)
+class Database protected(val source: DataSource)
     extends Queryable {
-
-  metrics.gauge("active-connections", name) { pool.getNumActive }
-  metrics.gauge("idle-connections", name)   { pool.getNumIdle }
-  metrics.gauge("total-connections", name)  { pool.getNumIdle + pool.getNumActive }
-  private val poolWait = metrics.timer("pool-wait")
-
 
   var transactionProvider: TransactionProvider = new TransactionManager
 
@@ -134,7 +112,7 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
     if (!forceNew && transactionProvider.transactionExists) {
       f(transactionProvider.currentTransaction)
     } else {
-      val connection = poolWait.time { source.getConnection }
+      val connection = source.getConnection
       connection.setAutoCommit(false)
       val txn = new Transaction(connection)
       try {
@@ -209,7 +187,7 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
     if (transactionProvider.transactionExists) {
       transactionProvider.currentTransaction(query)
     } else {
-      val connection = poolWait.time { source.getConnection }
+      val connection = source.getConnection
       try {
         apply(connection, query)
       } finally {
@@ -225,7 +203,7 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
     if (transactionProvider.transactionExists) {
       transactionProvider.currentTransaction.execute(statement)
     } else {
-      val connection = poolWait.time { source.getConnection }
+      val connection = source.getConnection
       try {
         execute(connection, statement)
       } finally {
@@ -245,6 +223,8 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
    * Closes all connections to the database.
    */
   def close() {
-    pool.close()
+    if (source.isInstanceOf[HikariDataSource]) {
+      source.asInstanceOf[HikariDataSource].close()
+    }
   }
 }

@@ -6,7 +6,7 @@
 
     <groupId>com.simple</groupId>
     <artifactId>jdub_2.11</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
     <name>Jdub for Scala ${scala.version}</name>
     <url>https://github.com/SimpleFinance/jdub</url>
     <description>Jdub is a Scala wrapper over JDBC.</description>
@@ -87,9 +87,9 @@
             <version>1.0.2</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-dbcp</artifactId>
-            <version>7.0.42</version>
+          <groupId>com.zaxxer</groupId>
+          <artifactId>HikariCP-java6</artifactId>
+          <version>2.3.2</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
@@ -252,4 +252,3 @@
         </extensions>
     </build>
 </project>
-
