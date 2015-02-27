@@ -8,6 +8,7 @@ import java.util.{UUID, Properties}
 import javax.sql.DataSource
 
 import com.codahale.metrics.SharedMetricRegistries
+import com.codahale.metrics.health.HealthCheckRegistry
 import nl.grons.metrics.scala.InstrumentedBuilder
 
 trait Instrumented extends InstrumentedBuilder {
@@ -31,7 +32,8 @@ object Database {
               maxWait: Long = 1000,
               maxSize: Int = 8,
               jdbcProperties: Map[String, String] = Map.empty,
-              sslSettings: Option[SslSettings] = None): Database = {
+              sslSettings: Option[SslSettings] = None,
+              healthCheckRegistry: Option[HealthCheckRegistry] = None): Database = {
 
     val properties = new Properties
 
@@ -52,6 +54,7 @@ object Database {
       setConnectionTimeout(maxWait)
       setMaximumPoolSize(maxSize)
       setMetricRegistry(SharedMetricRegistries.getOrCreate("default"))
+      healthCheckRegistry.map(setHealthCheckRegistry)
     }
 
     val poolDataSource  = new HikariDataSource(poolConfig)
