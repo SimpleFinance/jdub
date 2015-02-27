@@ -63,21 +63,31 @@ object Database {
   }
 
   protected def initSsl(ssl: SslSettings): Map[String, String] = {
-    // Load the client-side cert.
-    val idStore = KeyStore.getInstance(ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
-    idStore.load(new FileInputStream(ssl.clientCertKeyStorePath),
-                 ssl.clientCertKeyStorePassword.map { _.toCharArray }.orNull)
+    // ready the client-side certs
+    val clientCertKeyStoreProvider = ssl.clientCertKeyStoreProvider.getOrElse(KeyStore.getDefaultType)
+    val clientCertKeyStorePassword = ssl.clientCertKeyStorePassword.map(_.toCharArray).orNull
+    val clientCertKeyStoreStream = new FileInputStream(ssl.clientCertKeyStorePath)
+    val clientCertKeyStore = KeyStore.getInstance(clientCertKeyStoreProvider)
 
-    // Load the CA certs.
-    val trustStore = KeyStore.getInstance(ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType))
-    trustStore.load(new FileInputStream(ssl.trustKeyStoreProviderPath), null)
+    // ready the ca certs
+    val trustKeyStoreProvider = ssl.trustKeyStoreProvider.getOrElse(KeyStore.getDefaultType)
+    val trustKeyStoreStream = new FileInputStream(ssl.trustKeyStoreProviderPath)
+    val trustKeyStore = KeyStore.getInstance(trustKeyStoreProvider)
 
-    // Set it so that the ssl socket factory knows how to find these parameters
-    val params = SslParams(idStore, ssl.clientCertKeyStorePassword.orNull, trustStore)
+    // load everything up
+    clientCertKeyStore.load(clientCertKeyStoreStream, clientCertKeyStorePassword)
+    trustKeyStore.load(trustKeyStoreStream, null)
+
+    // get some parameters ready for the ssl socket factory
     val identifier = UUID.randomUUID().toString
+    val sslParams = SslParams(clientCertKeyStore,
+                              ssl.clientCertKeyStorePassword.orNull,
+                              trustKeyStore)
 
-    ClientSideCertSslSocketFactoryFactory.configure(identifier, params)
+    // let the factory know about our ssl params
+    ClientSideCertSslSocketFactoryFactory.configure(identifier, sslParams)
 
+    // return a set of jdbc properties that need to be set
     Map("ssl" -> "true",
         "sslfactory" -> "com.simple.jdub.ClientSideCertSslSocketFactoryFactory",
         "sslfactoryarg" -> identifier)
