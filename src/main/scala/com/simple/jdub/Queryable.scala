@@ -9,28 +9,26 @@ import java.sql.Connection
 
 import grizzled.slf4j.Logging
 
-trait Queryable extends Logging with Instrumented {
+trait Queryable extends Logging {
   import Utils._
 
   /**
    * Performs a query and returns the results.
    */
   def apply[A](connection: Connection, query: RawQuery[A]): A = {
-    query.timer.time {
-      logger.debug("%s with %s".format(query.sql,
-       query.values.mkString("(", ", ", ")")))
-      val stmt = connection.prepareStatement(prependComment(query, query.sql))
+    logger.debug("%s with %s".format(query.sql,
+     query.values.mkString("(", ", ", ")")))
+    val stmt = connection.prepareStatement(prependComment(query, query.sql))
+    try {
+      prepare(stmt, query.values)
+      val results = stmt.executeQuery()
       try {
-        prepare(stmt, query.values)
-        val results = stmt.executeQuery()
-        try {
-          query.handle(results)
-        } finally {
-          results.close()
-        }
+        query.handle(results)
       } finally {
-        stmt.close()
+        results.close()
       }
+    } finally {
+      stmt.close()
     }
   }
 
@@ -38,16 +36,14 @@ trait Queryable extends Logging with Instrumented {
    * Executes an update, insert, delete, or DDL statement.
    */
   def execute(connection: Connection, statement: Statement): Int = {
-    statement.timer.time {
-      logger.debug("%s with %s".format(statement.sql,
-        statement.values.mkString("(", ", ", ")")))
-      val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
-      try {
-        prepare(stmt, statement.values)
-        stmt.executeUpdate()
-      } finally {
-        stmt.close()
-      }
+    logger.debug("%s with %s".format(statement.sql,
+      statement.values.mkString("(", ", ", ")")))
+    val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
+    try {
+      prepare(stmt, statement.values)
+      stmt.executeUpdate()
+    } finally {
+      stmt.close()
     }
   }
 

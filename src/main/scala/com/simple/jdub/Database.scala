@@ -7,13 +7,8 @@ import java.security.KeyStore
 import java.util.{UUID, Properties}
 import javax.sql.DataSource
 
-import com.codahale.metrics.SharedMetricRegistries
+import com.codahale.metrics.{ MetricRegistry, SharedMetricRegistries }
 import com.codahale.metrics.health.HealthCheckRegistry
-import nl.grons.metrics.scala.InstrumentedBuilder
-
-trait Instrumented extends InstrumentedBuilder {
-  final val metricRegistry = SharedMetricRegistries.getOrCreate("default")
-}
 
 object Database {
 
@@ -33,7 +28,8 @@ object Database {
               maxSize: Int = 8,
               jdbcProperties: Map[String, String] = Map.empty,
               sslSettings: Option[SslSettings] = None,
-              healthCheckRegistry: Option[HealthCheckRegistry] = None): Database = {
+              healthCheckRegistry: Option[HealthCheckRegistry] = None,
+              metricRegistry: Option[MetricRegistry] = None): Database = {
 
     val properties = new Properties
 
@@ -53,13 +49,13 @@ object Database {
       setPassword(password)
       setConnectionTimeout(maxWait)
       setMaximumPoolSize(maxSize)
-      setMetricRegistry(SharedMetricRegistries.getOrCreate("default"))
       healthCheckRegistry.map(setHealthCheckRegistry)
+      metricRegistry.map(setMetricRegistry)
     }
 
     val poolDataSource  = new HikariDataSource(poolConfig)
 
-    new Database(poolDataSource)
+    new Database(poolDataSource, metricRegistry)
   }
 
   protected def initSsl(ssl: SslSettings): Map[String, String] = {
@@ -97,10 +93,22 @@ object Database {
 /**
  * A set of pooled connections to a database.
  */
-class Database protected(val source: DataSource)
+class Database protected(val source: DataSource, metrics: Option[MetricRegistry])
     extends Queryable {
 
-  var transactionProvider: TransactionProvider = new TransactionManager
+  private[jdub] val timer = metrics.map(_.timer("execute"))
+  private[jdub] def time[A](f: => A) = {
+    timer.fold(f) { metric =>
+      val ctx = metric.time()
+      try {
+        f
+      } finally {
+        ctx.stop
+      }
+    }
+  }
+
+  val transactionProvider: TransactionProvider = new TransactionManager
 
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
@@ -202,7 +210,9 @@ class Database protected(val source: DataSource)
     } else {
       val connection = source.getConnection
       try {
-        apply(connection, query)
+        time {
+          apply(connection, query)
+        }
       } finally {
         connection.close()
       }
@@ -218,7 +228,9 @@ class Database protected(val source: DataSource)
     } else {
       val connection = source.getConnection
       try {
-        execute(connection, statement)
+        time {
+          execute(connection, statement)
+        }
       } finally {
         connection.close()
       }
@@ -236,8 +248,8 @@ class Database protected(val source: DataSource)
    * Closes all connections to the database.
    */
   def close() {
-    if (source.isInstanceOf[HikariDataSource]) {
-      source.asInstanceOf[HikariDataSource].close()
+    if (source.isWrapperFor(classOf[HikariDataSource])) {
+      source.unwrap(classOf[HikariDataSource]).close()
     }
   }
 }
