@@ -1,6 +1,6 @@
 package com.simple.jdub
 
-trait SqlBase extends Instrumented {
+trait SqlBase {
   /**
    * Collapse all strings of whitespace into a single space.
    *

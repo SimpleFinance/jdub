@@ -3,8 +3,6 @@ package com.simple.jdub
 import java.sql.ResultSet
 
 trait RawQuery[A] extends SqlBase {
-  private[jdub] val timer = metrics.timer("query")
-
   def sql: String
 
   def values: Seq[Any]
