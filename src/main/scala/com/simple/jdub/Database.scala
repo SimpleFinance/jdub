@@ -7,7 +7,7 @@ import java.security.KeyStore
 import java.util.{UUID, Properties}
 import javax.sql.DataSource
 
-import com.codahale.metrics.{ MetricRegistry, SharedMetricRegistries }
+import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
 
 object Database {
@@ -96,10 +96,10 @@ object Database {
 class Database protected(val source: DataSource, metrics: Option[MetricRegistry])
     extends Queryable {
 
-  private[jdub] val timer = metrics.map(_.timer("execute"))
-  private[jdub] def time[A](f: => A) = {
-    timer.fold(f) { metric =>
-      val ctx = metric.time()
+  private[jdub] def time[A](klass: java.lang.Class[_])(f: => A) = {
+    metrics.fold(f) { registry =>
+      val timer = registry.timer(MetricRegistry.name(klass))
+      val ctx = timer.time()
       try {
         f
       } finally {
@@ -210,7 +210,7 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
     } else {
       val connection = source.getConnection
       try {
-        time {
+        time(query.getClass()) {
           apply(connection, query)
         }
       } finally {
@@ -228,7 +228,7 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
     } else {
       val connection = source.getConnection
       try {
-        time {
+        time(statement.getClass()) {
           execute(connection, statement)
         }
       } finally {
