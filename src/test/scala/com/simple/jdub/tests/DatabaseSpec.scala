@@ -55,6 +55,26 @@ class DatabaseSpec extends Spec {
                                       "AGE" -> 402))))
     }
 
+    @Test def `returns an array of strings` = {
+      db(NamesArrayQuery())
+        .map(_.toSeq) // arrays compare by reference, seqs by value
+        .must(be(Seq(Seq("Coda Hale",
+                         "Kris Gale",
+                         "Old Guy"))))
+    }
+
+    @Test def `returns an array of integers` = {
+      db(AgesArrayQuery())
+        .map(_.toSeq) // arrays compare by reference, seqs by value
+        .must(be(Seq(Seq(29, 30, 402))))
+    }
+
+    @Test def `returns an empty array` = {
+      db(EmptyArrayQuery())
+        .map(_.toSeq) // arrays compare by reference, seqs by value
+        .must(be(Seq(Seq())))
+    }
+
     class `transaction` {
       @Test def `commits by default` = {
         db.transaction { txn =>
@@ -377,4 +397,28 @@ case class MapsQuery() extends CollectionQuery[Seq, Map[String, Any]] {
   val values = Seq()
 
   def map(row: Row) = row.toMap
+}
+
+case class NamesArrayQuery() extends CollectionQuery[Seq, Array[String]] {
+  val sql = trim("SELECT ARRAY_AGG(name) AS names FROM people")
+
+  val values = Seq()
+
+  def map(row: Row) = row.array[String]("names")
+}
+
+case class AgesArrayQuery() extends CollectionQuery[Seq, Array[Int]] {
+  val sql = trim("SELECT ARRAY_AGG(age) AS ages FROM people")
+
+  val values = Seq()
+
+  def map(row: Row) = row.array[Int]("ages")
+}
+
+case class EmptyArrayQuery() extends CollectionQuery[Seq, Array[Int]] {
+  val sql = trim("SELECT ARRAY_AGG(age) AS ages FROM people WHERE name = 'not a name'")
+
+  val values = Seq()
+
+  def map(row: Row) = row.array[Int]("ages")
 }
