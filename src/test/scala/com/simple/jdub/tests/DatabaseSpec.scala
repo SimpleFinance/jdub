@@ -57,22 +57,24 @@ class DatabaseSpec extends Spec {
 
     @Test def `returns an array of strings` = {
       db(NamesArrayQuery())
-        .map(_.toSeq) // arrays compare by reference, seqs by value
-        .must(be(Seq(Seq("Coda Hale",
-                         "Kris Gale",
-                         "Old Guy"))))
+        .map(_.map(_.toSeq)) // arrays compare by reference, seqs by value
+        .must(be(Seq(Some(Seq("Coda Hale",
+                              "Kris Gale",
+                              "Old Guy")))))
     }
 
     @Test def `returns an array of integers` = {
       db(AgesArrayQuery())
-        .map(_.toSeq) // arrays compare by reference, seqs by value
-        .must(be(Seq(Seq(29, 30, 402))))
+        .map(_.map(_.toSeq)) // arrays compare by reference, seqs by value
+        .must(be(Seq(Some(Seq(29,
+                              30,
+                              402)))))
     }
 
     @Test def `returns an empty array` = {
       db(EmptyArrayQuery())
-        .map(_.toSeq) // arrays compare by reference, seqs by value
-        .must(be(Seq(Seq())))
+        .map(_.map(_.toSeq)) // arrays compare by reference, seqs by value
+        .must(be(Seq(None)))
     }
 
     class `transaction` {
@@ -399,7 +401,7 @@ case class MapsQuery() extends CollectionQuery[Seq, Map[String, Any]] {
   def map(row: Row) = row.toMap
 }
 
-case class NamesArrayQuery() extends CollectionQuery[Seq, Array[String]] {
+case class NamesArrayQuery() extends CollectionQuery[Seq, Option[Array[String]]] {
   val sql = trim("SELECT ARRAY_AGG(name) AS names FROM people")
 
   val values = Seq()
@@ -407,7 +409,7 @@ case class NamesArrayQuery() extends CollectionQuery[Seq, Array[String]] {
   def map(row: Row) = row.array[String]("names")
 }
 
-case class AgesArrayQuery() extends CollectionQuery[Seq, Array[Int]] {
+case class AgesArrayQuery() extends CollectionQuery[Seq, Option[Array[Int]]] {
   val sql = trim("SELECT ARRAY_AGG(age) AS ages FROM people")
 
   val values = Seq()
@@ -415,7 +417,7 @@ case class AgesArrayQuery() extends CollectionQuery[Seq, Array[Int]] {
   def map(row: Row) = row.array[Int]("ages")
 }
 
-case class EmptyArrayQuery() extends CollectionQuery[Seq, Array[Int]] {
+case class EmptyArrayQuery() extends CollectionQuery[Seq, Option[Array[Int]]] {
   val sql = trim("SELECT ARRAY_AGG(age) AS ages FROM people WHERE name = 'not a name'")
 
   val values = Seq()
