@@ -308,18 +308,17 @@ class Row(rs: ResultSet) {
 
   private[this] def extract[A](f: A): Option[A] = if (rs.wasNull()) None else Some(f)
 
-  def array[T: reflect.ClassTag](index: Int): Array[T] = extractArray[T](rs.getArray(index + 1))
+  def array[T: reflect.ClassTag](index: Int): Option[Array[T]] = extractArray[T](rs.getArray(index + 1))
 
-  def array[T: reflect.ClassTag](name: String): Array[T] = extractArray[T](rs.getArray(name))
+  def array[T: reflect.ClassTag](name: String): Option[Array[T]] = extractArray[T](rs.getArray(name))
 
-  private[this] def extractArray[T: reflect.ClassTag](sqlArray: java.sql.Array): Array[T] = {
+  private[this] def extractArray[T: reflect.ClassTag](sqlArray: java.sql.Array): Option[Array[T]] = {
     if (rs.wasNull()) {
-      Array.empty[T]
+      None
     } else {
-      sqlArray
-        .getArray
-        .asInstanceOf[Array[Object]]
-        .map(_.asInstanceOf[T])
+      Option(sqlArray.getArray
+                     .asInstanceOf[Array[Object]]
+                     .map(_.asInstanceOf[T]))
     }
   }
 }
