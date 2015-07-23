@@ -6,7 +6,7 @@
 
     <groupId>com.simple</groupId>
     <artifactId>jdub_2.11</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <name>Jdub for Scala ${scala.version}</name>
     <url>https://github.com/SimpleFinance/jdub</url>
     <description>Jdub is a Scala wrapper over JDBC.</description>
@@ -14,7 +14,7 @@
     <properties>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>${scala.major.version}.4</scala.version>
-        <metrics.version>3.1.1</metrics.version>
+        <metrics.version>3.1.2</metrics.version>
     </properties>
 
     <developers>
@@ -95,7 +95,7 @@
         <dependency>
           <groupId>com.zaxxer</groupId>
           <artifactId>HikariCP-java6</artifactId>
-          <version>2.3.5</version>
+          <version>2.3.9</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
@@ -116,13 +116,13 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.2.8</version>
+            <version>2.3.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
+            <version>1.1.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

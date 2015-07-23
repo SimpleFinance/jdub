@@ -29,7 +29,8 @@ object Database {
               jdbcProperties: Map[String, String] = Map.empty,
               sslSettings: Option[SslSettings] = None,
               healthCheckRegistry: Option[HealthCheckRegistry] = None,
-              metricRegistry: Option[MetricRegistry] = None): Database = {
+              metricRegistry: Option[MetricRegistry] = None,
+              connectionInitSql: Option[String] = None): Database = {
 
     val properties = new Properties
 
@@ -51,6 +52,7 @@ object Database {
       setMaximumPoolSize(maxSize)
       healthCheckRegistry.map(setHealthCheckRegistry)
       metricRegistry.map(setMetricRegistry)
+      connectionInitSql.map(setConnectionInitSql)
     }
 
     val poolDataSource  = new HikariDataSource(poolConfig)
