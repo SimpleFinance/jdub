@@ -38,11 +38,6 @@ object Database {
       properties.setProperty(k, v)
     }
 
-    for { settings <- sslSettings
-          (k, v) <- initSsl(settings) } {
-      properties.setProperty(k, v)
-    }
-
     val poolConfig = new HikariConfig(properties) {
       setPoolName(name.getOrElse(url.replaceAll("[^A-Za-z0-9]", "")))
       setJdbcUrl(url)
@@ -53,6 +48,11 @@ object Database {
       healthCheckRegistry.map(setHealthCheckRegistry)
       metricRegistry.map(setMetricRegistry)
       connectionInitSql.map(setConnectionInitSql)
+
+      for { settings <- sslSettings
+            (k, v) <- initSsl(settings) } {
+        addDataSourceProperty(k, v)
+      }
     }
 
     val poolDataSource  = new HikariDataSource(poolConfig)
