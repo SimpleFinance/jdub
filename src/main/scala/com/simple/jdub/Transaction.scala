@@ -1,6 +1,6 @@
 package com.simple.jdub
 
-import java.sql.Connection
+import java.sql.{Connection, Savepoint}
 import scala.collection.mutable.ListBuffer
 
 class Transaction(connection: Connection) extends Queryable {
@@ -24,6 +24,38 @@ class Transaction(connection: Connection) extends Queryable {
     connection.rollback()
     rolledback = true
     onRollback.foreach(_())
+  }
+
+  /**
+   * Roll back the transaction to a savepoint.
+   */
+  def rollback(savepoint: Savepoint) {
+    logger.debug("Rolling back to savepoint")
+    connection.rollback(savepoint)
+  }
+
+  /**
+   * Release a transaction from a savepoint.
+   */
+  def release(savepoint: Savepoint) {
+    logger.debug("Releasing savepoint")
+    connection.rollback(savepoint)
+  }
+
+  /**
+   * Set an unnamed savepoint.
+   */
+  def savepoint(): Savepoint = {
+    logger.debug("Setting unnamed savepoint")
+    connection.setSavepoint()
+  }
+
+  /**
+   * Set a named savepoint.
+   */
+  def savepoint(name: String): Savepoint = {
+    logger.debug("Setting savepoint")
+    connection.setSavepoint(name)
   }
 
   private[jdub] def commit() {
