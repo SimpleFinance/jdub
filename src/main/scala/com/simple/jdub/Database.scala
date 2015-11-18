@@ -159,10 +159,10 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
   /**
    * Opens a transaction that is implicitly used in all db calls on the current
    * thread within the scope of `f`. If `f` throws an exception the transaction
-   * is rolled back.
+   * is rolled back. Logs exceptions thrown by `f` as errors.
    */
   def transactionScope[A](f: => A): A = {
-    transaction(true, false, (txn: Transaction) => {
+    transaction(logError = true, forceNew = false, (txn: Transaction) => {
       transactionProvider.begin(txn)
       try {
         f
@@ -177,10 +177,46 @@ class Database protected(val source: DataSource, pool: GenericObjectPool, name: 
    * on the current thread within the scope of `f`. If a
    * transactionScope already exists in scope when called this method
    * will create a new separate transactionScope. If `f` throws an
-   * exception the transaction is rolled back.
+   * exception the transaction is rolled back. Logs exceptions thrown by
+   * `f` as errors.
    */
   def newTransactionScope[A](f: => A): A = {
-    transaction(true, true, (txn: Transaction) => {
+    transaction(logError = true, forceNew = true, (txn: Transaction) => {
+      transactionProvider.begin(txn)
+      try {
+        f
+      } finally {
+        transactionProvider.end
+      }
+    })
+  }
+
+  /**
+   * Opens a transaction that is implicitly used in all db calls on the current
+   * thread within the scope of `f`. If `f` throws an exception the transaction
+   * is rolled back. Will not log exceptions thrown by `f`.
+   */
+  def quietTransactionScope[A](f: => A): A = {
+    transaction(logError = false, forceNew = false, (txn: Transaction) => {
+      transactionProvider.begin(txn)
+      try {
+        f
+      } finally {
+        transactionProvider.end
+      }
+    })
+  }
+
+  /**
+   * Opens a new transaction that is implicitly used in all db calls
+   * on the current thread within the scope of `f`. If a
+   * transactionScope already exists in scope when called this method
+   * will create a new separate transactionScope. If `f` throws an
+   * exception the transaction is rolled back. Will not log exceptions
+   * thrown by `f`.
+   */
+  def newQuietTransactionScope[A](f: => A): A = {
+    transaction(logError = false, forceNew = true, (txn: Transaction) => {
       transactionProvider.begin(txn)
       try {
         f
