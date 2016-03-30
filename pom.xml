@@ -12,9 +12,10 @@
     <description>Jdub is a Scala wrapper over JDBC.</description>
 
     <properties>
+        <hikaricp.version>2.4.5</hikaricp.version>
+        <metrics.version>3.1.2</metrics.version>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>${scala.major.version}.7</scala.version>
-        <metrics.version>3.1.2</metrics.version>
     </properties>
 
     <developers>
@@ -95,7 +96,7 @@
         <dependency>
           <groupId>com.zaxxer</groupId>
           <artifactId>HikariCP</artifactId>
-          <version>2.4.3</version>
+          <version>${hikaricp.version}</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
