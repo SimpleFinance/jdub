@@ -39,7 +39,7 @@ class Transaction(val connection: Connection) extends Queryable {
    */
   def release(savepoint: Savepoint) {
     logger.debug("Releasing savepoint")
-    connection.rollback(savepoint)
+    connection.releaseSavepoint(savepoint)
   }
 
   /**
