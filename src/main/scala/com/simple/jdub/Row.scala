@@ -23,7 +23,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value at the given offset as an Option[UUID].
    */
-  def uuid(index: Int) = string(index + 1).map { UUID.fromString }
+  def uuid(index: Int) = string(index).map { UUID.fromString }
 
   /**
    * Extract the value with the given name as an Option[UUID].
