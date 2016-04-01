@@ -3,7 +3,7 @@ package com.simple.jdub
 import java.sql.{Connection, Savepoint}
 import scala.collection.mutable.ListBuffer
 
-class Transaction(connection: Connection) extends Queryable {
+class Transaction(val connection: Connection) extends Queryable {
   private[this] var rolledback = false
 
   /**
