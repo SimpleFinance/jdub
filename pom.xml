@@ -13,7 +13,7 @@
 
     <properties>
         <grizzled-slf4j.version>1.2.0</grizzled-slf4j.version>
-        <hikaricp.version>2.4.6</hikaricp.version>
+        <hikaricp-java7.version>2.4.9</hikaricp-java7.version>
         <hsqldb.version>2.3.3</hsqldb.version>
         <joda-convert.version>1.7</joda-convert.version>
         <joda-time.version>2.9.1</joda-time.version>
@@ -111,8 +111,8 @@
         </dependency>
         <dependency>
           <groupId>com.zaxxer</groupId>
-          <artifactId>HikariCP</artifactId>
-          <version>${hikaricp.version}</version>
+          <artifactId>HikariCP-java7</artifactId>
+          <version>${hikaricp-java7.version}</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
@@ -178,8 +178,8 @@
     <build>
         <plugins>
             <plugin>
-              <groupId>net.alchim31.maven</groupId>
-              <artifactId>scala-maven-plugin</artifactId>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
                 <version>${scala-maven-plugin.version}</version>
                 <executions>
                     <execution>
