@@ -25,9 +25,12 @@
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>2.17</maven-surefire-plugin.version>
         <metrics.version>3.1.2</metrics.version>
+        <mockito.version>1.9.5</mockito.version>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>${scala.major.version}.8</scala.version>
         <scala-maven-plugin.version>3.2.0</scala-maven-plugin.version>
+        <scalatest.version>3.0.0</scalatest.version>
+        <scalatest-maven-plugin.version>1.0</scalatest-maven-plugin.version>
         <wagon-ssh-external.version>2.6</wagon-ssh-external.version>
     </properties>
 
@@ -121,10 +124,17 @@
             <artifactId>joda-convert</artifactId>
             <version>${joda-convert.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>com.simple</groupId>
-            <artifactId>simplespec_${scala.major.version}</artifactId>
-            <version>0.8.4</version>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.major.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -261,6 +271,22 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>${scalatest-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <stdout>FD</stdout>
+                </configuration>
             </plugin>
         </plugins>
         <extensions>
