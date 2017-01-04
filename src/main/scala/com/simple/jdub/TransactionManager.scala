@@ -5,14 +5,14 @@
 
 package com.simple.jdub
 
-import scala.collection.mutable.Stack
+import java.util.Stack
 
 trait TransactionProvider {
   def transactionExists: Boolean
   def currentTransaction: Transaction
-  def begin(transaction: Transaction)
-  def end: Unit
-  def rollback: Unit
+  def begin(transaction: Transaction): Unit
+  def end(): Unit
+  def rollback(): Unit
 }
 
 class TransactionManager extends TransactionProvider {
@@ -22,48 +22,52 @@ class TransactionManager extends TransactionProvider {
     override def initialValue = None
   }
 
-  protected def ambientTransactionState = {
+  protected def ambientTransactionState: Option[TransactionState] = {
     localTransactionStorage.get
   }
 
-  protected def ambientTransaction = {
-    ambientTransactionState.flatMap(t => Some(t.transactions.head))
+  protected def ambientTransaction: Option[Transaction] = {
+    ambientTransactionState.map(_.transactions.peek)
   }
 
-  protected def currentTransactionState = {
-    ambientTransactionState
-      .getOrElse(throw new Exception("No transaction in current context"))
+  protected def currentTransactionState: TransactionState = {
+    ambientTransactionState.getOrElse(
+      throw new Exception("No transaction in current context")
+    )
   }
 
-  def currentTransaction = {
-    ambientTransaction
-      .getOrElse(throw new Exception("No transaction in current context"))
+  def transactionExists: Boolean = {
+    ambientTransactionState.isDefined
   }
 
-  def transactionExists = {
-    ambientTransactionState.isEmpty == false
+  def currentTransaction: Transaction = {
+    ambientTransaction.getOrElse(
+      throw new Exception("No transaction in current context")
+    )
   }
 
-  def begin(transaction: Transaction) {
+  def begin(transaction: Transaction): Unit = {
     if (!transactionExists) {
-      localTransactionStorage.set(Some(new TransactionState(Stack(transaction))))
+      val stack = new Stack[Transaction]()
+      stack.push(transaction)
+      localTransactionStorage.set(Some(new TransactionState(stack)))
     } else {
       currentTransactionState.transactions.push(transaction)
     }
   }
 
-  def end {
+  def end(): Unit = {
     if (!transactionExists) {
       throw new Exception("No transaction in current context")
     } else {
       currentTransactionState.transactions.pop
-      if (currentTransactionState.transactions.isEmpty) {
+      if (currentTransactionState.transactions.empty) {
         localTransactionStorage.set(None)
       }
     }
   }
 
-  def rollback = {
+  def rollback(): Unit = {
     currentTransaction.rollback
   }
 }
