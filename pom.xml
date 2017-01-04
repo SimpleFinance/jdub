@@ -194,6 +194,8 @@
                     <args>
                         <arg>-unchecked</arg>
                         <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                        <arg>-language:higherKinds</arg>
                     </args>
                     <charset>UTF-8</charset>
                 </configuration>
