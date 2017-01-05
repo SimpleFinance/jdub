@@ -7,8 +7,8 @@ jdub
 Requirements
 ------------
 
-* Java SE 6 or above
-* Scala 2.11.x
+* Java SE 8 or above
+* Scala 2.12.x
 
 How To Use
 ----------
@@ -180,6 +180,6 @@ License
 -------
 
 Copyright (c) 2011-2012 Coda Hale
-Copyright (c) 2012-2016 Simple Finance Technology Corp. All rights reserved.
+Copyright (c) 2012-2017 Simple Finance Technology Corp. All rights reserved.
 
 Published under The MIT License, see [LICENSE.md](LICENSE.md)
