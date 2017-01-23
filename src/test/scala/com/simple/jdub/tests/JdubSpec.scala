@@ -4,7 +4,7 @@
 package com.simple.jdub.tests
 
 import com.simple.jdub.Database
-
+import com.simple.jdub.Database.Primary
 import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.FunSuite
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object Global {
   val i = new AtomicInteger
-  val db = Database.connect("jdbc:hsqldb:mem:DbTest" + Global.i.incrementAndGet(), "sa", "")
+  val db = Database.connect[Primary]("jdbc:hsqldb:mem:DbTest" + Global.i.incrementAndGet(), "sa", "")
 }
 
 trait JdubSpec extends FunSuite

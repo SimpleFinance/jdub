@@ -1,9 +1,12 @@
 package com.simple.jdub
 
+import com.simple.jdub.Database.Primary
+import com.simple.jdub.Database.Role
+
 import java.sql.{Connection, Savepoint}
 import scala.collection.mutable.ListBuffer
 
-class Transaction(val connection: Connection) extends Queryable {
+class Transaction[R <: Role](val connection: Connection) extends Queryable[R] {
   private[this] var rolledback = false
 
   /**
@@ -14,12 +17,12 @@ class Transaction(val connection: Connection) extends Queryable {
   /**
    * Executes an update, insert, delete, or DDL statement.
    */
-  def execute(statement: Statement) = execute(connection, statement)
+  def execute(statement: Statement)(implicit ev: R =:= Primary) = execute(connection, statement)
 
   /**
    * Roll back the transaction.
    */
-  def rollback() {
+  def rollback()(implicit ev: R =:= Primary) {
     logger.debug("Rolling back transaction")
     connection.rollback()
     rolledback = true
@@ -29,7 +32,7 @@ class Transaction(val connection: Connection) extends Queryable {
   /**
    * Roll back the transaction to a savepoint.
    */
-  def rollback(savepoint: Savepoint) {
+  def rollback(savepoint: Savepoint)(implicit ev: R =:= Primary) {
     logger.debug("Rolling back to savepoint")
     connection.rollback(savepoint)
   }
@@ -37,7 +40,7 @@ class Transaction(val connection: Connection) extends Queryable {
   /**
    * Release a transaction from a savepoint.
    */
-  def release(savepoint: Savepoint) {
+  def release(savepoint: Savepoint)(implicit ev: R =:= Primary) {
     logger.debug("Releasing savepoint")
     connection.releaseSavepoint(savepoint)
   }
@@ -45,7 +48,7 @@ class Transaction(val connection: Connection) extends Queryable {
   /**
    * Set an unnamed savepoint.
    */
-  def savepoint(): Savepoint = {
+  def savepoint()(implicit ev: R =:= Primary): Savepoint = {
     logger.debug("Setting unnamed savepoint")
     connection.setSavepoint()
   }
@@ -53,12 +56,12 @@ class Transaction(val connection: Connection) extends Queryable {
   /**
    * Set a named savepoint.
    */
-  def savepoint(name: String): Savepoint = {
+  def savepoint(name: String)(implicit ev: R =:= Primary): Savepoint = {
     logger.debug("Setting savepoint")
     connection.setSavepoint(name)
   }
 
-  private[jdub] def commit() {
+  private[jdub] def commit()(implicit ev: R =:= Primary) {
     if (!rolledback) {
       logger.debug("Committing transaction")
       connection.commit()
@@ -72,7 +75,7 @@ class Transaction(val connection: Connection) extends Queryable {
     onClose.foreach(_())
   }
 
-  def transaction[A](f: Transaction => A): A = f(this)
+  def transaction[A](f: Transaction[R] => A)(implicit ev: R =:= Primary): A = f(this)
 
   var onCommit: ListBuffer[() => Unit] = ListBuffer.empty[() => Unit]
   var onClose: ListBuffer[() => Unit] = ListBuffer.empty[() => Unit]

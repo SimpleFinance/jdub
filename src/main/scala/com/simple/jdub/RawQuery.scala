@@ -1,5 +1,7 @@
 package com.simple.jdub
 
+import com.simple.jdub.Database.Role
+
 import java.sql.ResultSet
 
 trait RawQuery[A] extends SqlBase {
@@ -9,5 +11,5 @@ trait RawQuery[A] extends SqlBase {
 
   def handle(results: ResultSet): A
 
-  def apply(db: Database): A = db(this)
+  def apply(db: Database[Role]): A = db(this)
 }

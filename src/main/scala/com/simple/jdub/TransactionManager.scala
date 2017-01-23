@@ -5,18 +5,21 @@
 
 package com.simple.jdub
 
+import com.simple.jdub.Database.Primary
+import com.simple.jdub.Database.Role
+
 import java.util.Stack
 
-trait TransactionProvider {
+trait TransactionProvider[R <: Role] {
   def transactionExists: Boolean
-  def currentTransaction: Transaction
-  def begin(transaction: Transaction): Unit
-  def end(): Unit
-  def rollback(): Unit
+  def currentTransaction: Transaction[R]
+  def begin(transaction: Transaction[R])(implicit ev: R =:= Primary): Unit
+  def end()(implicit ev: R =:= Primary): Unit
+  def rollback()(implicit ev: R =:= Primary): Unit
 }
 
-class TransactionManager extends TransactionProvider {
-  case class TransactionState(transactions: Stack[Transaction])
+class TransactionManager[R <: Role] extends TransactionProvider[R] {
+  case class TransactionState(transactions: Stack[Transaction[R]])
 
   private val localTransactionStorage = new ThreadLocal[Option[TransactionState]] {
     override def initialValue = None
@@ -26,7 +29,7 @@ class TransactionManager extends TransactionProvider {
     localTransactionStorage.get
   }
 
-  protected def ambientTransaction: Option[Transaction] = {
+  protected def ambientTransaction: Option[Transaction[R]] = {
     ambientTransactionState.map(_.transactions.peek)
   }
 
@@ -40,15 +43,15 @@ class TransactionManager extends TransactionProvider {
     ambientTransactionState.isDefined
   }
 
-  def currentTransaction: Transaction = {
+  def currentTransaction: Transaction[R] = {
     ambientTransaction.getOrElse(
       throw new Exception("No transaction in current context")
     )
   }
 
-  def begin(transaction: Transaction): Unit = {
+  def begin(transaction: Transaction[R])(implicit ev: R =:= Primary): Unit = {
     if (!transactionExists) {
-      val stack = new Stack[Transaction]()
+      val stack = new Stack[Transaction[R]]()
       stack.push(transaction)
       localTransactionStorage.set(Some(new TransactionState(stack)))
     } else {
@@ -56,7 +59,7 @@ class TransactionManager extends TransactionProvider {
     }
   }
 
-  def end(): Unit = {
+  def end()(implicit ev: R =:= Primary): Unit = {
     if (!transactionExists) {
       throw new Exception("No transaction in current context")
     } else {
@@ -67,7 +70,7 @@ class TransactionManager extends TransactionProvider {
     }
   }
 
-  def rollback(): Unit = {
+  def rollback()(implicit ev: R =:= Primary): Unit = {
     currentTransaction.rollback
   }
 }

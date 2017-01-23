@@ -1,5 +1,6 @@
 package com.simple.jdub.tests
 
+import com.simple.jdub.Database.Replica
 import com.simple.jdub._
 
 class DatabaseSpec extends JdubSpec {
@@ -57,5 +58,14 @@ class DatabaseSpec extends JdubSpec {
     db(EmptyArrayQuery())
       .map(_.map(_.toSeq)) // arrays compare by reference, seqs by value
       .must(be(Seq(None)))
+  }
+
+  test("replica databases can only execute statements and read-only queries") {
+    val replica = db.replica
+
+    replica(AgeQuery("Coda Hale")).must(be(Some(29)))
+
+    // the following will not compile when using a replica
+    // replica.execute(SQL("CREATE TABLE i_cannot_do_this()"))
   }
 }

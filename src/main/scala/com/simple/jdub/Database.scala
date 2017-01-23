@@ -4,13 +4,20 @@ import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
 import java.io.FileInputStream
 import java.security.KeyStore
-import java.util.{UUID, Properties}
+import java.util.{Properties, UUID}
 import javax.sql.DataSource
-
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
+import com.simple.jdub.Database.Primary
+import com.simple.jdub.Database.Replica
+
+import scala.annotation.implicitNotFound
 
 object Database {
+
+  sealed trait Role
+  final class Primary extends Role
+  final class Replica extends Role
 
   /**
    * Create a pool of connections to the given database.
@@ -20,7 +27,7 @@ object Database {
    * @param password the database password
    * @param sslSettings if present, uses the given SSL settings for a client-side SSL cert.
    */
-  def connect(url: String,
+  def connect[R <: Role](url: String,
               username: String,
               password: String,
               name: Option[String] = None,
@@ -30,7 +37,7 @@ object Database {
               sslSettings: Option[SslSettings] = None,
               healthCheckRegistry: Option[HealthCheckRegistry] = None,
               metricRegistry: Option[MetricRegistry] = None,
-              connectionInitSql: Option[String] = None): Database = {
+              connectionInitSql: Option[String] = None): Database[R] = {
 
     val properties = new Properties
 
@@ -95,8 +102,8 @@ object Database {
 /**
  * A set of pooled connections to a database.
  */
-class Database protected(val source: DataSource, metrics: Option[MetricRegistry])
-    extends Queryable {
+class Database[R <: Database.Role] protected(val source: DataSource, metrics: Option[MetricRegistry])
+    extends Queryable[R] {
 
   private[jdub] def time[A](klass: java.lang.Class[_])(f: => A) = {
     metrics.fold(f) { registry =>
@@ -110,34 +117,38 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
     }
   }
 
-  val transactionProvider: TransactionProvider = new TransactionManager
+  val transactionProvider: TransactionProvider[R] = new TransactionManager
+
+  def replica: Database[Replica] = new Database[Replica](source, metrics)
+
+  def primary: Database[Primary] = new Database[Primary](source, metrics)
 
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
    */
-  def transaction[A](f: Transaction => A): A = transaction(true, f)
+  def transaction[A](f: Transaction[R] => A)(implicit ev: R =:= Primary): A = transaction(true, f)
 
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back, but the exception is not
    * logged (since it is rethrown).
    */
-  def quietTransaction[A](f: Transaction => A): A = transaction(false, f)
+  def quietTransaction[A](f: Transaction[R] => A)(implicit ev: R =:= Primary): A = transaction(false, f)
 
-  def transaction[A](logError: Boolean, f: Transaction => A): A = transaction(false, false, f)
+  def transaction[A](logError: Boolean, f: Transaction[R] => A)(implicit ev: R =:= Primary): A = transaction(false, false, f)
 
   /**
    * Opens a transaction which is committed after `f` is called. If `f` throws
    * an exception, the transaction is rolled back.
    */
-  def transaction[A](logError: Boolean, forceNew: Boolean, f: Transaction => A): A = {
+  def transaction[A](logError: Boolean, forceNew: Boolean, f: Transaction[R] => A)(implicit ev: R =:= Primary): A = {
     if (!forceNew && transactionProvider.transactionExists) {
       f(transactionProvider.currentTransaction)
     } else {
       val connection = source.getConnection
       connection.setAutoCommit(false)
-      val txn = new Transaction(connection)
+      val txn = new Transaction[R](connection)
       try {
         logger.debug("Starting transaction")
         val result = f(txn)
@@ -162,8 +173,8 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
    * thread within the scope of `f`. If `f` throws an exception the transaction
    * is rolled back. Logs exceptions thrown by `f` as errors.
    */
-  def transactionScope[A](f: => A): A = {
-    transaction(logError = true, forceNew = false, (txn: Transaction) => {
+  def transactionScope[A](f: => A)(implicit ev: R =:= Primary): A = {
+    transaction(logError = true, forceNew = false, (txn: Transaction[R]) => {
       transactionProvider.begin(txn)
       try {
         f
@@ -181,8 +192,8 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
    * exception the transaction is rolled back. Logs exceptions thrown by
    * `f` as errors.
    */
-  def newTransactionScope[A](f: => A): A = {
-    transaction(logError = true, forceNew = true, (txn: Transaction) => {
+  def newTransactionScope[A](f: => A)(implicit ev: R =:= Primary): A = {
+    transaction(logError = true, forceNew = true, (txn: Transaction[R]) => {
       transactionProvider.begin(txn)
       try {
         f
@@ -197,8 +208,8 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
    * thread within the scope of `f`. If `f` throws an exception the transaction
    * is rolled back. Will not log exceptions thrown by `f`.
    */
-  def quietTransactionScope[A](f: => A): A = {
-    transaction(logError = false, forceNew = false, (txn: Transaction) => {
+  def quietTransactionScope[A](f: => A)(implicit ev: R =:= Primary): A = {
+    transaction(logError = false, forceNew = false, (txn: Transaction[R]) => {
       transactionProvider.begin(txn)
       try {
         f
@@ -216,8 +227,8 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
    * exception the transaction is rolled back. Will not log exceptions
    * thrown by `f`.
    */
-  def newQuietTransactionScope[A](f: => A): A = {
-    transaction(logError = false, forceNew = true, (txn: Transaction) => {
+  def newQuietTransactionScope[A](f: => A)(implicit ev: R =:= Primary): A = {
+    transaction(logError = false, forceNew = true, (txn: Transaction[R]) => {
       transactionProvider.begin(txn)
       try {
         f
@@ -230,7 +241,7 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
   /**
    * The transaction currently scoped via transactionScope.
    */
-  def currentTransaction = {
+  def currentTransaction(implicit ev: R =:= Primary) = {
     transactionProvider.currentTransaction
   }
 
@@ -260,7 +271,7 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
   /**
    * Executes an update, insert, delete, or DDL statement.
    */
-  def execute(statement: Statement) = {
+  def execute(statement: Statement)(implicit ev: R =:= Primary): Int = {
     if (transactionProvider.transactionExists) {
       transactionProvider.currentTransaction.execute(statement)
     } else {
@@ -278,7 +289,7 @@ class Database protected(val source: DataSource, metrics: Option[MetricRegistry]
   /**
    * Rollback any existing ambient transaction
    */
-  def rollback() {
+  def rollback()(implicit ev: R =:= Primary) {
     transactionProvider.rollback
   }
 

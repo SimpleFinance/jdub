@@ -5,11 +5,13 @@
 
 package com.simple.jdub
 
-import java.sql.Connection
+import com.simple.jdub.Database.Primary
+import com.simple.jdub.Database.Role
 
+import java.sql.Connection
 import grizzled.slf4j.Logging
 
-trait Queryable extends Logging {
+trait Queryable[R <: Role] extends Logging {
   import Utils._
 
   /**
@@ -35,7 +37,7 @@ trait Queryable extends Logging {
   /**
    * Executes an update, insert, delete, or DDL statement.
    */
-  def execute(connection: Connection, statement: Statement): Int = {
+  def execute(connection: Connection, statement: Statement)(implicit ev: R =:= Primary): Int = {
     logger.debug("%s with %s".format(statement.sql,
       statement.values.mkString("(", ", ", ")")))
     val stmt = connection.prepareStatement(prependComment(statement, statement.sql))
@@ -47,9 +49,9 @@ trait Queryable extends Logging {
     }
   }
 
-  def execute(statement: Statement): Int
+  def execute(statement: Statement)(implicit ev: R =:= Primary): Int
   def apply[A](query: RawQuery[A]): A
-  def transaction[A](f: Transaction => A): A
+  def transaction[A](f: Transaction[R] => A)(implicit ev: R =:= Primary): A
 
   /**
    * Performs a query and returns the results.
@@ -59,15 +61,15 @@ trait Queryable extends Logging {
   /**
    * Executes an update statement.
    */
-  def update(statement: Statement): Int = execute(statement)
+  def update(statement: Statement)(implicit ev: R =:= Primary): Int = execute(statement)
 
   /**
    * Executes an insert statement.
    */
-  def insert(statement: Statement): Int = execute(statement)
+  def insert(statement: Statement)(implicit ev: R =:= Primary): Int = execute(statement)
 
   /**
    * Executes a delete statement.
    */
-  def delete(statement: Statement): Int = execute(statement)
+  def delete(statement: Statement)(implicit ev: R =:= Primary): Int = execute(statement)
 }
