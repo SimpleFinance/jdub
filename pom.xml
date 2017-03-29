@@ -6,32 +6,32 @@
 
     <groupId>com.simple</groupId>
     <artifactId>jdub_2.11</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0-SNAPSHOT</version>
     <name>Jdub for Scala ${scala.version}</name>
     <url>https://github.com/SimpleFinance/jdub</url>
     <description>Jdub is a Scala wrapper over JDBC.</description>
 
     <properties>
-        <grizzled-slf4j.version>1.2.0</grizzled-slf4j.version>
-        <hikaricp-java7.version>2.4.9</hikaricp-java7.version>
-        <hsqldb.version>2.3.3</hsqldb.version>
-        <joda-convert.version>1.7</joda-convert.version>
-        <joda-time.version>2.9.1</joda-time.version>
-        <logback.version>1.1.7</logback.version>
-        <maven-compiler-plugin.version>3.2</maven-compiler-plugin.version>
-        <maven-gpg-plugin.version>1.5</maven-gpg-plugin.version>
-        <maven-javadoc-plugin.version>2.9.1</maven-javadoc-plugin.version>
-        <maven-resources-plugin.version>2.6</maven-resources-plugin.version>
-        <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
-        <maven-surefire-plugin.version>2.17</maven-surefire-plugin.version>
+        <grizzled-slf4j.version>1.3.0</grizzled-slf4j.version>
+        <hikaricp.version>2.6.1</hikaricp.version>
+        <hsqldb.version>2.3.4</hsqldb.version>
+        <joda-convert.version>1.8.1</joda-convert.version>
+        <joda-time.version>2.9.9</joda-time.version>
+        <logback.version>1.2.2</logback.version>
+        <maven-compiler-plugin.version>3.6.0</maven-compiler-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
+        <maven-resources-plugin.version>3.0.2</maven-resources-plugin.version>
+        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <metrics.version>3.1.2</metrics.version>
-        <mockito.version>1.9.5</mockito.version>
+        <mockito.version>1.10.19</mockito.version>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>${scala.major.version}.8</scala.version>
-        <scala-maven-plugin.version>3.2.0</scala-maven-plugin.version>
-        <scalatest.version>3.0.0</scalatest.version>
+        <scala-maven-plugin.version>3.2.2</scala-maven-plugin.version>
+        <scalatest.version>3.0.1</scalatest.version>
         <scalatest-maven-plugin.version>1.0</scalatest-maven-plugin.version>
-        <wagon-ssh-external.version>2.6</wagon-ssh-external.version>
+        <wagon-ssh-external.version>2.10</wagon-ssh-external.version>
     </properties>
 
     <developers>
@@ -63,7 +63,7 @@
 
     <issueManagement>
         <system>github</system>
-        <url>http://github.com/SimpleFinance/jdub/issues#issue/</url>
+        <url>http://github.com/SimpleFinance/jdub/issues</url>
     </issueManagement>
 
     <repositories>
@@ -111,8 +111,8 @@
         </dependency>
         <dependency>
           <groupId>com.zaxxer</groupId>
-          <artifactId>HikariCP-java7</artifactId>
-          <version>${hikaricp-java7.version}</version>
+          <artifactId>HikariCP</artifactId>
+          <version>${hikaricp.version}</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
@@ -204,8 +204,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
