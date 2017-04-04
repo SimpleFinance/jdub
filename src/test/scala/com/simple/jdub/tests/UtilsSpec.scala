@@ -2,22 +2,36 @@ package com.simple.jdub.tests
 
 import com.simple.jdub._
 
-import org.joda.time.DateTime
-import org.joda.time.LocalDate
 import org.mockito.Mockito.verify
 
 import java.sql
 import scala.math.BigDecimal
 
 class UtilsSpec extends JdubSpec {
-  test("DateTime is converted properly") {
-    val converted = Utils.convert(DateTime.now())
+  test("joda - DateTime is converted properly") {
+    val converted = Utils.convert(org.joda.time.DateTime.now())
     converted.isInstanceOf[java.sql.Timestamp].must(be(true))
   }
 
-  test("LocalDate is converted properly") {
-    val converted = Utils.convert(LocalDate.now())
+  test("joda - LocalDate is converted properly") {
+    val converted = Utils.convert(org.joda.time.LocalDate.now())
     converted.isInstanceOf[java.sql.Date].must(be(true))
+  }
+
+  test("jdk - LocalDateTime is converted properly") {
+    val jdkDateTime = java.time.LocalDateTime.now()
+    val converted = Utils.convert(jdkDateTime)
+
+    converted.isInstanceOf[java.sql.Timestamp].must(be(true))
+    converted.asInstanceOf[java.sql.Timestamp].toLocalDateTime.mustBe(jdkDateTime)
+  }
+
+  test("jdk - LocalDate is converted properly") {
+    val jdkDate = java.time.LocalDate.now()
+    val converted = Utils.convert(jdkDate)
+
+    converted.isInstanceOf[java.sql.Date].must(be(true))
+    converted.asInstanceOf[java.sql.Date].toLocalDate.mustBe(jdkDate)
   }
 
   test("BigDecimal is converted property") {
