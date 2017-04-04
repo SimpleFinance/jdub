@@ -17,7 +17,7 @@
         <hsqldb.version>2.3.4</hsqldb.version>
         <joda-convert.version>1.8.1</joda-convert.version>
         <joda-time.version>2.9.9</joda-time.version>
-        <logback.version>1.2.2</logback.version>
+        <logback.version>1.2.3</logback.version>
         <maven-compiler-plugin.version>3.6.0</maven-compiler-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
