@@ -34,6 +34,14 @@ class UtilsSpec extends JdubSpec {
     converted.asInstanceOf[java.sql.Date].toLocalDate.mustBe(jdkDate)
   }
 
+  test("jdk - Instant is converted properly") {
+    val jdkInstant = java.time.Instant.now()
+    val converted = Utils.convert(jdkInstant)
+
+    converted.isInstanceOf[java.sql.Timestamp].must(be(true))
+    converted.asInstanceOf[java.sql.Timestamp].toInstant.must(be(jdkInstant))
+  }
+
   test("BigDecimal is converted property") {
     val converted = Utils.convert(BigDecimal("1.20"))
     converted.isInstanceOf[java.math.BigDecimal].must(be(true))

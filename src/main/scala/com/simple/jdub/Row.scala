@@ -152,6 +152,25 @@ class Row(rs: ResultSet) {
   def timestamp(name: String) = extract(rs.getTimestamp(name))
 
   /**
+    * Extract the value at the given offset as an Option[Instant].
+    */
+  def instant(index: Int) = extract(rs.getTimestamp(index + 1)).map(_.toInstant)
+
+  /**
+    * Extract the value with the given name as an Option[Instant].
+    */
+  def instant(name: String) = extract(rs.getTimestamp(name)).map(_.toInstant)
+
+  /**
+    * Extract the value at the given offset as an Option[LocalDateTime].
+    */
+  def localDateTime(index: Int) = extract(rs.getTimestamp(index + 1)).map(_.toLocalDateTime)
+
+  /**
+    * Extract the value with the given name as an Option[LocalDateTime].
+    */
+  def localDateTime(name: String) = extract(rs.getTimestamp(name)).map(_.toLocalDateTime)
+  /**
    * Extract the value with the given name as an Option[DateTime].
    */
   def datetime(index: Int): Option[DateTime] = {

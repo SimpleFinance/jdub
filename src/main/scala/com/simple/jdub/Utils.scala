@@ -42,6 +42,7 @@ object Utils {
       // Convert JDK8 date/times
       case d: java.time.LocalDate => java.sql.Date.valueOf(d)
       case dt: java.time.LocalDateTime => java.sql.Timestamp.valueOf(dt)
+      case i: java.time.Instant => java.sql.Timestamp.from(i)
 
       // Pass everything else through.
       case _ => x
