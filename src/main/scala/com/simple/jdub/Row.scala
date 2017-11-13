@@ -174,6 +174,7 @@ class Row(rs: ResultSet) {
     * Extract the value with the given name as an Option[LocalDateTime].
     */
   def localDateTime(name: String): Option[LocalDateTime] = timestamp(name).map(_.toLocalDateTime)
+
   /**
    * Extract the value with the given name as an Option[DateTime].
    */
