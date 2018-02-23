@@ -1,11 +1,22 @@
 package com.simple.jdub
 
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 
-import java.io.{InputStream, Reader}
+import java.io.InputStream
+import java.io.Reader
 import java.net.URL
-import java.sql.{Blob, Clob, Date, NClob, Ref, ResultSet, SQLXML, Time, Timestamp}
-import java.time.{Instant, LocalDateTime}
+import java.sql.Blob
+import java.sql.Clob
+import java.sql.Date
+import java.sql.NClob
+import java.sql.Ref
+import java.sql.ResultSet
+import java.sql.SQLXML
+import java.sql.Time
+import java.sql.Timestamp
+import java.time.Instant
+import java.time.LocalDateTime
 import java.util.UUID
 
 /**
