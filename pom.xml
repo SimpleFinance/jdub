@@ -6,7 +6,7 @@
 
     <groupId>com.simple</groupId>
     <artifactId>jdub_2.11</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.5.0</version>
     <name>Jdub for Scala ${scala.version}</name>
     <url>https://github.com/SimpleFinance/jdub</url>
     <description>Jdub is a Scala wrapper over JDBC.</description>
