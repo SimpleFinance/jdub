@@ -10,19 +10,19 @@ import scala.math.BigDecimal
 class UtilsSpec extends JdubSpec {
   test("joda - DateTime is converted properly") {
     val converted = Utils.convert(org.joda.time.DateTime.now())
-    converted.isInstanceOf[java.sql.Timestamp].must(be(true))
+    converted.isInstanceOf[java.sql.Timestamp].mustBe(true)
   }
 
   test("joda - LocalDate is converted properly") {
     val converted = Utils.convert(org.joda.time.LocalDate.now())
-    converted.isInstanceOf[java.sql.Date].must(be(true))
+    converted.isInstanceOf[java.sql.Date].mustBe(true)
   }
 
   test("jdk - LocalDateTime is converted properly") {
     val jdkDateTime = java.time.LocalDateTime.now()
     val converted = Utils.convert(jdkDateTime)
 
-    converted.isInstanceOf[java.sql.Timestamp].must(be(true))
+    converted.isInstanceOf[java.sql.Timestamp].mustBe(true)
     converted.asInstanceOf[java.sql.Timestamp].toLocalDateTime.mustBe(jdkDateTime)
   }
 
@@ -30,18 +30,26 @@ class UtilsSpec extends JdubSpec {
     val jdkDate = java.time.LocalDate.now()
     val converted = Utils.convert(jdkDate)
 
-    converted.isInstanceOf[java.sql.Date].must(be(true))
+    converted.isInstanceOf[java.sql.Date].mustBe(true)
     converted.asInstanceOf[java.sql.Date].toLocalDate.mustBe(jdkDate)
+  }
+
+  test("jdk - Instant is converted properly") {
+    val jdkInstant = java.time.Instant.now()
+    val converted = Utils.convert(jdkInstant)
+
+    converted.isInstanceOf[java.sql.Timestamp].mustBe(true)
+    converted.asInstanceOf[java.sql.Timestamp].toInstant.mustBe(jdkInstant)
   }
 
   test("BigDecimal is converted property") {
     val converted = Utils.convert(BigDecimal("1.20"))
-    converted.isInstanceOf[java.math.BigDecimal].must(be(true))
+    converted.isInstanceOf[java.math.BigDecimal].mustBe(true)
   }
 
   test("BigInt is converted property") {
     val converted = Utils.convert(BigInt(120))
-    converted.isInstanceOf[java.math.BigDecimal].must(be(true))
+    converted.isInstanceOf[java.math.BigDecimal].mustBe(true)
   }
 
   test("Null is set as null") {
