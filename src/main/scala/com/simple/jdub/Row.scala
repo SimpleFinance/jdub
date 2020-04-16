@@ -16,6 +16,7 @@ import java.sql.SQLXML
 import java.sql.Time
 import java.sql.Timestamp
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -127,12 +128,12 @@ class Row(rs: ResultSet) {
   def bigDecimal(name: String): Option[BigDecimal] = extract(rs.getBigDecimal(name)).map { scala.math.BigDecimal(_) }
 
   /**
-   * Extract the value at the given offset as an Option[Array[Byte]].
+   * Extract the value at the given offset as an `Option[Array[Byte]]`.
    */
   def bytes(index: Int): Option[Array[Byte]] = extract(rs.getBytes(index + 1))
 
   /**
-   * Extract the value with the given name as an Option[Array[Byte]].
+   * Extract the value with the given name as an `Option[Array[Byte]]`.
    */
   def bytes(name: String): Option[Array[Byte]] = extract(rs.getBytes(name))
 
@@ -154,7 +155,7 @@ class Row(rs: ResultSet) {
   /**
    * Extract the value with the given name as an Option[Time].
    */
-  def time(name: String) = extract(rs.getTime(name))
+  def time(name: String): Option[Time] = extract(rs.getTime(name))
 
   /**
    * Extract the value at the given offset as an Option[Timestamp].
@@ -185,6 +186,16 @@ class Row(rs: ResultSet) {
     * Extract the value with the given name as an Option[LocalDateTime].
     */
   def localDateTime(name: String): Option[LocalDateTime] = timestamp(name).map(_.toLocalDateTime)
+
+  /**
+   * Extract the value at the given offset as an Option[LocalDate].
+   */
+  def localDate(index: Int): Option[LocalDate] = localDateTime(index).map(_.toLocalDate)
+
+  /**
+   * Extract the value with the given name as an Option[LocalDate].
+   */
+  def localDate(name: String): Option[LocalDate] = localDateTime(name).map(_.toLocalDate)
 
   /**
    * Extract the value with the given name as an Option[DateTime].
